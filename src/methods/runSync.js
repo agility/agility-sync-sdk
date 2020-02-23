@@ -4,6 +4,7 @@ import { logInfo, logSuccess } from '../util'
 export default async function () {
 
     const languageCodes = this.config.languages;
+    const channels = this.config.channels;
     const syncStorageInterface = this.syncStorageInterface;
 
 	for (const languageCode of languageCodes) {
@@ -19,7 +20,7 @@ export default async function () {
 		if (newItemToken != syncState.itemToken
 			|| newPageToken != syncState.pageToken) {
 			//if we sync ANYTHING - pull the new sitemap down
-			const channels = this.config.channels;
+			
 
 			for (const channelName of channels) {
 				const sitemap = await this.agilityClient.getSitemapFlat({ channelName, languageCode });
