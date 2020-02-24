@@ -15,6 +15,17 @@ By keeping a local cache of your content, your web app can access content faster
 2. You are using a **Static Site Generator (SSG)** and you don't want to have to re-source all of your content on each build.
 3. You have a client-side **Single Page Application**, and want to cache content in local storage in the browser.
 
+## How it Works
+This Sync SDK uses the Sync API `getSyncPages` and `getSyncContent` found in our [Agility CMS Content Fetch JS SDK](https://agilitydocs.netlify.com/agility-content-fetch-js-sdk/) and aims to abstract some of the complexities involved in managing synced content.
+
+It Calls the Sync API and returns content that has not yet been synced. The first call will pull everything and save it to your local store. Subsequent calls will only refresh content that has changed since the last time the Sync API was called.
+
+This SDK:
+- Calls the API
+- Manages your `syncToken` for you
+- Stores content in the filesystem (by default)
+- Provides ability to extend and store/access content in other places
+
 ## Setup
 Install `@agility/content-sync`:
 ```
