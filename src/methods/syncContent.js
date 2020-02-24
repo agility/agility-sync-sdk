@@ -6,7 +6,7 @@ import { logInfo } from '../util'
  * Sync the content items in the specified Agility Instance.
  */
 export default async function (languageCode, token) {
-    const syncStorageInterface = this.syncStorageInterface;
+    const storeInterface = this.store;
 
 	if (!token) token = 0;
 
@@ -32,7 +32,7 @@ export default async function (languageCode, token) {
 		}
 
 		for (let index = 0; index < syncItems.length; index++) {
-			await syncStorageInterface.saveContentItem({ contentItem: syncItems[index], languageCode });
+			await storeInterface.saveContentItem({ contentItem: syncItems[index], languageCode });
 		}
 
 		token = syncRet.syncToken;

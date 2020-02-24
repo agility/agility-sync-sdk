@@ -1,7 +1,7 @@
 import { logInfo } from '../util'
 
 export default async function (languageCode, token) {
-    const syncStorageInterface = this.syncStorageInterface;
+    const storeInterface = this.store;
 	if (!token) token = 0;
 
 	do {
@@ -23,7 +23,7 @@ export default async function (languageCode, token) {
 		}
 
 		for (let index = 0; index < syncItems.length; index++) {
-			await syncStorageInterface.savePageItem({ pageItem: syncItems[index], languageCode });
+			await storeInterface.savePageItem({ pageItem: syncItems[index], languageCode });
 		}
 
 		token = syncRet.syncToken;

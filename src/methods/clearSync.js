@@ -1,7 +1,7 @@
 import { logSuccess } from '../util'
 
 export default async function () {
-    const syncStorageInterface = this.syncStorageInterface;
-	await syncStorageInterface.clear();
+    const storeInterface = this.store;
+	await storeInterface.clear();
 	logSuccess(`Cleared Sync Items`);
 }

@@ -5,18 +5,16 @@ require("dotenv").config({
 	path: `.env.${process.env.NODE_ENV}`,
 })
 
-let rootPath = process.env.AGILITY_LOCAL_CACHE_FOLDER;
-if (!rootPath) rootPath = ".agility-files";
 
-const getFilePath = ({ itemType, languageCode, itemID }) => {
+const getFilePath = ({ options, itemType, languageCode, itemID }) => {
 	const fileName = `${itemID}.json`;
 
-	return path.join(rootPath, languageCode, itemType, fileName);
+	return path.join(options.rootPath, languageCode, itemType, fileName);
 }
 
-const saveItem = async ({ item, itemType, languageCode, itemID }) => {
+const saveItem = async ({ options, item, itemType, languageCode, itemID }) => {
 
-	let filePath = getFilePath({ itemType, languageCode, itemID });
+	let filePath = getFilePath({ options, itemType, languageCode, itemID });
 
 	let dirPath = path.dirname(filePath);
 
@@ -29,9 +27,9 @@ const saveItem = async ({ item, itemType, languageCode, itemID }) => {
 	fs.writeFileSync(filePath, json);
 }
 
-const deleteItem = async ({ itemType, languageCode, itemID }) => {
+const deleteItem = async ({ options, itemType, languageCode, itemID }) => {
 
-	let filePath = getFilePath({ itemType, languageCode, itemID });
+	let filePath = getFilePath({ options, itemType, languageCode, itemID });
 
 	if (fs.existsSync(filePath)) {
 		fs.unlinkSync(filePath);
@@ -39,9 +37,9 @@ const deleteItem = async ({ itemType, languageCode, itemID }) => {
 
 }
 
-const mergeItemToList = async ({ item, languageCode, itemID, referenceName, definitionName }) => {
+const mergeItemToList = async ({ options, item, languageCode, itemID, referenceName, definitionName }) => {
 
-	let contentList = await getItem({ itemType: "list", languageCode, itemID: referenceName });
+	let contentList = await getItem({ options, itemType: "list", languageCode, itemID: referenceName });
 
 	if (contentList == null) {
 		//initialize the list
@@ -71,11 +69,11 @@ const mergeItemToList = async ({ item, languageCode, itemID, referenceName, defi
 		}
 	}
 
-	await saveItem({ item: contentList, itemType: "list", languageCode, itemID: referenceName });
+	await saveItem({ options, item: contentList, itemType: "list", languageCode, itemID: referenceName });
 }
 
-const getItem = async ({ itemType, languageCode, itemID }) => {
-	let filePath = getFilePath({ itemType, languageCode, itemID });
+const getItem = async ({ options, itemType, languageCode, itemID }) => {
+	let filePath = getFilePath({ options, itemType, languageCode, itemID });
 
 	if (!fs.existsSync(filePath)) return null;
 
@@ -83,8 +81,8 @@ const getItem = async ({ itemType, languageCode, itemID }) => {
 	return JSON.parse(json);
 }
 
-const clearItems = async () => {
-	fs.rmdirSync(rootPath, { recursive: true })
+const clearItems = async ({ options }) => {
+	fs.rmdirSync(options.rootPath, { recursive: true })
 }
 
 

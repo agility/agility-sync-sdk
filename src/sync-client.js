@@ -4,13 +4,11 @@ import clearSync from './methods/clearSync'
 import syncPages from './methods/syncPages'
 import runSync from './methods/runSync'
 
-//uses filesystem by default
-import syncStorage from './plugins/agility-sync-filesystem'
-import syncStorageInterface from './sync-storage-interface'
+import storeInterface from './store-interface'
 
-function getSyncWorker (userConfig) {
+function getSyncClient (userConfig) {
     validateConfigParams(userConfig);
-    return createSyncWorker(userConfig);
+    return createSyncCient(userConfig);
 }
 
 function validateConfigParams(configParams) {
@@ -32,11 +30,15 @@ const defaultConfig = {
     languages: [],
     channels: [],
     debug: false,
-    syncStorage: syncStorage
-
+    store: {
+        resolve: `./store-interface-filesystem`,
+        options: {
+            rootPath: '.agility-files'
+        }
+    }
 };
 
-function createSyncWorker(userConfig) {
+function createSyncCient(userConfig) {
     let config = {
         ...defaultConfig,
         ...userConfig
@@ -51,11 +53,12 @@ function createSyncWorker(userConfig) {
         baseUrl: config.baseUrl
     });
 
-    //validate we have an impementation of the syncStorage available
-    validateSyncStorageAccess(config.syncStorage)
 
-    //set the sync storage interface provider
-    syncStorageInterface.setSyncStorage(config.syncStorage);
+    //resolve the dependancy for store interface implementation (uses file-system by default)
+    let store = require(config.store.resolve);
+
+    //set the sync storage interface provider, it will also validate it
+    storeInterface.setStore(store, config.store.options);
     
     return {
         config,
@@ -64,19 +67,8 @@ function createSyncWorker(userConfig) {
         syncPages,
         clearSync,
         runSync,
-        syncStorageInterface
+        store: storeInterface
     }
 }
 
-function validateSyncStorageAccess (syncStorage) {
-	if (!syncStorage.clearItems
-		|| !syncStorage.getItem
-		|| !syncStorage.saveItem) {
-		logError("The sync storage access provider specified does not implement the clearItems, getItem, or saveItem method.");
-		return;
-	}
-	return;
-}
-
-
-export default { getSyncWorker }
+export default { getSyncClient }

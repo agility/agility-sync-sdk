@@ -5,12 +5,12 @@ export default async function () {
 
     const languageCodes = this.config.languages;
     const channels = this.config.channels;
-    const syncStorageInterface = this.syncStorageInterface;
+    const storeInterface = this.store;
 
 	for (const languageCode of languageCodes) {
 
 		logSuccess(`Starting Sync for ${languageCode}`);
-		let syncState = await syncStorageInterface.getSyncState(languageCode);
+		let syncState = await storeInterface.getSyncState(languageCode);
 
 		if (!syncState) syncState = { itemToken: 0, pageToken: 0 };
 
@@ -24,7 +24,7 @@ export default async function () {
 
 			for (const channelName of channels) {
 				const sitemap = await this.agilityClient.getSitemapFlat({ channelName, languageCode });
-                syncStorageInterface.saveSitemap({ sitemap, languageCode, channelName });
+                storeInterface.saveSitemap({ sitemap, languageCode, channelName });
                 logInfo(`Updated Sitemap channels: ${channelName}`);
 			}
 
@@ -34,7 +34,7 @@ export default async function () {
 		syncState.itemToken = newItemToken;
 		syncState.pageToken = newPageToken;
 
-		await syncStorageInterface.saveSyncState({ syncState, languageCode });
+		await storeInterface.saveSyncState({ syncState, languageCode });
 
 		logSuccess(`Completed Sync for ${languageCode}`);
 
