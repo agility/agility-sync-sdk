@@ -4,8 +4,9 @@ The Agility CMS Sync SDK provides an interface to maintain to sync, store and ac
 By keeping a local cache of your content, your web app can access content faster.
 
 ## Benefits
-- Reduce number of REST API calls to Agility CMS
-- Flexible storage options - uses **Local Filesystem** by default, but you can roll your own storage interface, such as **Gatsby GraphQL**, a **Database**, and **Browser Local Storage**
+- Access your content quickly, and locally in your web or mobile app
+- Use your own persistent storage, such as **Gatsby GraphQL**, a **Database**, or **Local Storage**
+- Simplify syncing content
 
 
 
