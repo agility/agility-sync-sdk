@@ -89,7 +89,6 @@ const saveSitemap = async ({sitemap, channelName, languageCode}) => {
 
 const saveSyncState = async ({syncState, languageCode}) => {
 	await store.saveItem({ options, item: syncState, itemType: "state", languageCode, itemID: "sync" });
-
 }
 
 const getSyncState = async (languageCode) => {
@@ -98,10 +97,10 @@ const getSyncState = async (languageCode) => {
 
 const getContentItem = async ({contentID, languageCode, depth = 2}) => {
 	const contentItem = await store.getItem({ options, itemType: "item", languageCode, itemID: contentID });
-	return await expandContentItem({ options, contentItem, languageCode, depth });
+	return await expandContentItem({ contentItem, languageCode, depth });
 }
 
-const expandContentItem = async ({contentItem, languageCode, depth}) => {
+const expandContentItem = async ({ contentItem, languageCode, depth}) => {
 	if(!contentItem) return null;
 
 	if (depth > 0) {

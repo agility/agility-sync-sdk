@@ -50,7 +50,7 @@ npm install @agility/content-sync
 
 2. Run the `runSync` command to synchronize your Agility CMS content (*Content* and *Pages*) to your local filesystem
     ```javascript
-    syncClient.runSync();
+    await syncClient.runSync();
     ```
     `runSync()` will pull down all your *Sitemap*, *Pages*, and *Content* and store them in your local filesystem under the default path `.agility-files`.
 
@@ -58,6 +58,7 @@ npm install @agility/content-sync
 While this SDK provides a filesystem sync interface by default, you can change this and use another one or create your own.
 ```javascript
 import agilitySync from '@agility/constent-sync'
+import aSampleSyncConsoleInterface from './store-interface-console'
 const syncClient = agilitySync.getSyncClient({
     //your 'guid' from Agility CMS
     guid: 'some-guid',
@@ -69,8 +70,9 @@ const syncClient = agilitySync.getSyncClient({
     channels: ['website'],
     //your custom storage/access interface
     store: {
-        //must be an absolute path to your custom interface JS module
-        resolve: `${process.cwd()}/src/store-interface-console`,
+        //must be the interface used to store and access content
+        interface: aSampleSyncConsoleInterface,
+        //any options/config that you want to pass along to your interface as an argument 'options'
         options: {}
     }
 });
@@ -112,38 +114,29 @@ const contentList = await syncClient.store.getContentList({
 ## How to Create your Own Sync Store
 Create a new `.js` file which exports the following methods:
 ```javascript
-const saveItem = async ({ options, item, itemType, languageCode, itemID }) => {
+exports.saveItem = async ({ options, item, itemType, languageCode, itemID }) => {
     console.log(`Console Interface: saveItem has been called`);
     return null;
 }
 
-const deleteItem = async ({ options, itemType, languageCode, itemID }) => {
+exports.deleteItem = async ({ options, itemType, languageCode, itemID }) => {
     console.log(`Console Interface: deleteItem has been called`);
     return null;
 }
 
-const mergeItemToList = async ({ options, item, languageCode, itemID, referenceName, definitionName }) => {
+exports.mergeItemToList = async ({ options, item, languageCode, itemID, referenceName, definitionName }) => {
 	console.log(`Console Interface: mergeItemToList has been called`);
     return null;
 }
 
-const getItem = async ({ options, itemType, languageCode, itemID }) => {
+exports.getItem = async ({ options, itemType, languageCode, itemID }) => {
     console.log(`Console Interface: getItem has been called`)
     return null;
 }
 
-const clearItems = async ({ options }) => {
+exports.clearItems = async ({ options }) => {
     console.log(`Console Interface: clearItem has been called`)
     return null;
-}
-
-
-export {
-	saveItem,
-	deleteItem,
-	getItem,
-	clearItems,
-	mergeItemToList
 }
 ```
 

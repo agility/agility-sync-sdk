@@ -5,6 +5,7 @@ import syncPages from './methods/syncPages'
 import runSync from './methods/runSync'
 
 import storeInterface from './store-interface'
+import storeInterfaceFileSystem from './store-interface-filesystem'
 
 function getSyncClient (userConfig) {
     validateConfigParams(userConfig);
@@ -31,7 +32,7 @@ const defaultConfig = {
     channels: [],
     debug: false,
     store: {
-        resolve: `./store-interface-filesystem`,
+        interface: storeInterfaceFileSystem,
         options: {
             rootPath: '.agility-files'
         }
@@ -55,7 +56,7 @@ function createSyncCient(userConfig) {
 
 
     //resolve the dependancy for store interface implementation (uses file-system by default)
-    let store = require(config.store.resolve);
+    let store = config.store.interface;
 
     //set the sync storage interface provider, it will also validate it
     storeInterface.setStore(store, config.store.options);
