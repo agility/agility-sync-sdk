@@ -12,7 +12,7 @@ const getFilePath = ({ options, itemType, languageCode, itemID }) => {
 	return path.join(options.rootPath, languageCode, itemType, fileName);
 }
 
-exports.saveItem = async ({ options, item, itemType, languageCode, itemID }) => {
+const saveItem = async ({ options, item, itemType, languageCode, itemID }) => {
 
 	let filePath = getFilePath({ options, itemType, languageCode, itemID });
 
@@ -27,7 +27,7 @@ exports.saveItem = async ({ options, item, itemType, languageCode, itemID }) => 
 	fs.writeFileSync(filePath, json);
 }
 
-exports.deleteItem = async ({ options, itemType, languageCode, itemID }) => {
+const deleteItem = async ({ options, itemType, languageCode, itemID }) => {
 
 	let filePath = getFilePath({ options, itemType, languageCode, itemID });
 
@@ -37,7 +37,7 @@ exports.deleteItem = async ({ options, itemType, languageCode, itemID }) => {
 
 }
 
-exports.mergeItemToList = async ({ options, item, languageCode, itemID, referenceName, definitionName }) => {
+const mergeItemToList = async ({ options, item, languageCode, itemID, referenceName, definitionName }) => {
 
 	let contentList = await getItem({ options, itemType: "list", languageCode, itemID: referenceName });
 
@@ -72,7 +72,7 @@ exports.mergeItemToList = async ({ options, item, languageCode, itemID, referenc
 	await saveItem({ options, item: contentList, itemType: "list", languageCode, itemID: referenceName });
 }
 
-exports.getItem = async ({ options, itemType, languageCode, itemID }) => {
+const getItem = async ({ options, itemType, languageCode, itemID }) => {
 	let filePath = getFilePath({ options, itemType, languageCode, itemID });
 
 	if (!fs.existsSync(filePath)) return null;
@@ -81,6 +81,15 @@ exports.getItem = async ({ options, itemType, languageCode, itemID }) => {
 	return JSON.parse(json);
 }
 
-exports.clearItems = async ({ options }) => {
+const clearItems = async ({ options }) => {
 	fs.rmdirSync(options.rootPath, { recursive: true })
+}
+
+
+module.exports = {
+	saveItem,
+	deleteItem,
+	mergeItemToList,
+	getItem,
+	clearItems
 }

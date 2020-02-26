@@ -1,40 +1,40 @@
 {
-  "name": "@agility/content-sync",
-  "version": "0.1.0",
-  "description": "JavaScript SDK for synchronizing content from Agility CMS",
-  "main": "dist/agility-sync-sdk.node.js",
-  "scripts": {
-    "test": "nyc --reporter=html --reporter=text mocha --require @babel/register --recursive ./test/",
-    "generate-docs": "node_modules/.bin/jsdoc --configure .jsdoc.json --verbose",
-    "build": "webpack --config webpack.config -p"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/agility/agility-sync-sdk.git"
-  },
-  "author": "James Vidler",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/agility/agility-sync-sdk/issues"
-  },
-  "homepage": "https://github.com/agility/agility-sync-sdk#readme",
-  "dependencies": {
-    "@agility/content-fetch": "^0.8.1",
-    "dotenv": "^8.2.0"
-  },
-  "devDependencies": {
-    "@babel/cli": "^7.2.3",
-    "@babel/core": "^7.3.4",
-    "@babel/node": "^7.2.2",
-    "@babel/preset-env": "^7.3.4",
-    "@babel/register": "^7.0.0",
-    "agility-jsdoc-template": "1.0.3",
-    "babel-loader": "^8.0.5",
-    "chai": "^4.2.0",
-    "jsdoc": "^3.5.5",
-    "mocha": "^7.0.1",
-    "nyc": "^15.0.0",
-    "webpack": "^4.29.6",
-    "webpack-cli": "^3.2.3"
-  }
+	"name": "@agility/content-sync",
+	"version": "0.1.1",
+	"description": "JavaScript SDK for synchronizing content from Agility CMS",
+	"main": "dist/agility-sync-sdk.node.js",
+	"scripts": {
+		"test": "nyc --reporter=html --reporter=text mocha --require @babel/register --recursive ./test/",
+		"generate-docs": "node_modules/.bin/jsdoc --configure .jsdoc.json --verbose",
+		"build": "webpack --config webpack.config -p"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/agility/agility-sync-sdk.git"
+	},
+	"author": "James Vidler",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/agility/agility-sync-sdk/issues"
+	},
+	"homepage": "https://github.com/agility/agility-sync-sdk#readme",
+	"dependencies": {
+		"@agility/content-fetch": "^0.8.1",
+		"dotenv": "^8.2.0"
+	},
+	"devDependencies": {
+		"@babel/cli": "^7.2.3",
+		"@babel/core": "^7.3.4",
+		"@babel/node": "^7.2.2",
+		"@babel/preset-env": "^7.3.4",
+		"@babel/register": "^7.0.0",
+		"agility-jsdoc-template": "1.0.3",
+		"babel-loader": "^8.0.5",
+		"chai": "^4.2.0",
+		"jsdoc": "^3.5.5",
+		"mocha": "^7.0.1",
+		"nyc": "^15.0.0",
+		"webpack": "^4.29.6",
+		"webpack-cli": "^3.2.3"
+	}
 }
