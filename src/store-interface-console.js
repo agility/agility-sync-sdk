@@ -1,24 +1,32 @@
-exports.saveItem = async ({ options, item, itemType, languageCode, itemID }) => {
+const saveItem = async ({ options, item, itemType, languageCode, itemID }) => {
     console.log(`Console Interface: saveItem has been called`);
     return null;
 }
 
-exports.deleteItem = async ({ options, itemType, languageCode, itemID }) => {
+const deleteItem = async ({ options, itemType, languageCode, itemID }) => {
     console.log(`Console Interface: deleteItem has been called`);
     return null;
 }
 
-exports.mergeItemToList = async ({ options, item, languageCode, itemID, referenceName, definitionName }) => {
+const mergeItemToList = async ({ options, item, languageCode, itemID, referenceName, definitionName }) => {
 	console.log(`Console Interface: mergeItemToList has been called`);
     return null;
 }
 
-exports.getItem = async ({ options, itemType, languageCode, itemID }) => {
+const getItem = async ({ options, itemType, languageCode, itemID }) => {
     console.log(`Console Interface: getItem has been called`)
     return null;
 }
 
-exports.clearItems = async ({ options }) => {
+const clearItems = async ({ options }) => {
     console.log(`Console Interface: clearItem has been called`)
     return null;
+}
+
+module.exports = {
+    saveItem,
+    deleteItem,
+    mergeItemToList,
+    getItem,
+    clearItems
 }

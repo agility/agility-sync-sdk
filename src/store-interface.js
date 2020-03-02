@@ -126,8 +126,6 @@ const expandContentItem = async ({ contentItem, languageCode, depth}) => {
         }
     }
     return contentItem;
-
-	return contentItem;
 }
 
 const getContentList = async ({referenceName, languageCode}) => {
