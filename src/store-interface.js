@@ -4,25 +4,25 @@ import { logDebug, logInfo, logError, logWarning, logSuccess, asyncForEach } fro
 let store = null;
 let options = null;
 
-const validateStoreInterface =  (storeCandidate) => {
+const validateStoreInterface = (storeCandidate) => {
 
-	if(!storeCandidate.clearItems) {
+	if (!storeCandidate.clearItems) {
 		throw new TypeError("Your sync store interface must implement `clearItems`.");
 	}
 
-	if(!storeCandidate.deleteItem) {
+	if (!storeCandidate.deleteItem) {
 		throw new TypeError("Your sync store interface must implement `deleteItem`.");
 	}
 
-	if(!storeCandidate.getItem) {
+	if (!storeCandidate.getItem) {
 		throw new TypeError("Your sync store interface must implement `getItem`.");
 	}
 
-	if(!storeCandidate.saveItem) {
+	if (!storeCandidate.saveItem) {
 		throw new TypeError("Your sync store interface must implement `saveItem`.");
 	}
 
-	if(!storeCandidate.mergeItemToList) {
+	if (!storeCandidate.mergeItemToList) {
 		throw new TypeError("Your sync store interface must implement `mergeItemToList`.");
 	}
 }
@@ -30,12 +30,12 @@ const validateStoreInterface =  (storeCandidate) => {
 
 const setStore = (storeToUse, storeOptions) => {
 	validateStoreInterface(storeToUse);
-	store = storeToUse;	
+	store = storeToUse;
 	options = storeOptions;
 
 }
 
-const saveContentItem = async ({contentItem, languageCode}) => {
+const saveContentItem = async ({ contentItem, languageCode }) => {
 
 	if (!contentItem || !contentItem.properties) {
 		logWarning('Null item or item with no properties cannot be saved');
@@ -71,7 +71,7 @@ const saveContentItem = async ({contentItem, languageCode}) => {
 	}
 }
 
-const savePageItem = async ({pageItem, languageCode}) =>  {
+const savePageItem = async ({ pageItem, languageCode }) => {
 
 	if (pageItem.properties.state === 3) {
 		//item is deleted
@@ -82,12 +82,16 @@ const savePageItem = async ({pageItem, languageCode}) =>  {
 	}
 }
 
-const saveSitemap = async ({sitemap, channelName, languageCode}) => {
+const saveSitemap = async ({ sitemap, channelName, languageCode }) => {
 	await store.saveItem({ options, item: sitemap, itemType: "sitemap", languageCode, itemID: channelName });
 
 }
 
-const saveSyncState = async ({syncState, languageCode}) => {
+const saveSitemapNested = async ({ sitemapNested, channelName, languageCode }) => {
+	await store.saveItem({ options, item: sitemapNested, itemType: "nestedsitemap", languageCode, itemID: channelName });
+}
+
+const saveSyncState = async ({ syncState, languageCode }) => {
 	await store.saveItem({ options, item: syncState, itemType: "state", languageCode, itemID: "sync" });
 }
 
@@ -95,40 +99,40 @@ const getSyncState = async (languageCode) => {
 	return await store.getItem({ options, itemType: "state", languageCode, itemID: "sync" });
 }
 
-const getContentItem = async ({contentID, languageCode, depth = 2}) => {
+const getContentItem = async ({ contentID, languageCode, depth = 2 }) => {
 	const contentItem = await store.getItem({ options, itemType: "item", languageCode, itemID: contentID });
 	return await expandContentItem({ contentItem, languageCode, depth });
 }
 
-const expandContentItem = async ({ contentItem, languageCode, depth}) => {
-	if(!contentItem) return null;
+const expandContentItem = async ({ contentItem, languageCode, depth }) => {
+	if (!contentItem) return null;
 
 	if (depth > 0) {
-        //make this work for the .fields or the .customFields property...
-        let fields = contentItem.fields;
-        if (!fields) fields = contentItem.customFields;
-        for (const fieldName in fields) {
-            const fieldValue = fields[fieldName];
-            if (fieldValue.contentid > 0) {
-                //single linked item
-                const childItem = await getContentItem({ contentID: fieldValue.contentid, languageCode, depth: depth - 1 });
-                if (childItem != null) fields[fieldName] = childItem;
-            } else if (fieldValue.sortids && fieldValue.sortids.split) {
-                //multi linked item
-                const sortIDAry = fieldValue.sortids.split(',');
-                const childItems = [];
-                for (const childItemID of sortIDAry) {
-                    const childItem = await getContentItem({ contentID: childItemID, languageCode, depth: depth - 1 });
-                    if (childItem != null) childItems.push(childItem);
-                }
-                fields[fieldName] = childItems;
-            }
-        }
-    }
-    return contentItem;
+		//make this work for the .fields or the .customFields property...
+		let fields = contentItem.fields;
+		if (!fields) fields = contentItem.customFields;
+		for (const fieldName in fields) {
+			const fieldValue = fields[fieldName];
+			if (fieldValue.contentid > 0) {
+				//single linked item
+				const childItem = await getContentItem({ contentID: fieldValue.contentid, languageCode, depth: depth - 1 });
+				if (childItem != null) fields[fieldName] = childItem;
+			} else if (fieldValue.sortids && fieldValue.sortids.split) {
+				//multi linked item
+				const sortIDAry = fieldValue.sortids.split(',');
+				const childItems = [];
+				for (const childItemID of sortIDAry) {
+					const childItem = await getContentItem({ contentID: childItemID, languageCode, depth: depth - 1 });
+					if (childItem != null) childItems.push(childItem);
+				}
+				fields[fieldName] = childItems;
+			}
+		}
+	}
+	return contentItem;
 }
 
-const getContentList = async ({referenceName, languageCode}) => {
+const getContentList = async ({ referenceName, languageCode }) => {
 	return await store.getItem({ options, itemType: "list", languageCode, itemID: referenceName });
 }
 /**
@@ -136,7 +140,7 @@ const getContentList = async ({referenceName, languageCode}) => {
  * @param {*} { pageID, languageCode, depth = 3 }
  * @returns
  */
-const getPage = async ({pageID, languageCode, depth = 3}) => {
+const getPage = async ({ pageID, languageCode, depth = 3 }) => {
 	let pageItem = await store.getItem({ options, itemType: "page", languageCode, itemID: pageID });
 
 	if (depth > 0) {
@@ -157,14 +161,19 @@ const getPage = async ({pageID, languageCode, depth = 3}) => {
 
 }
 
-const getSitemap = async ({channelName, languageCode}) => {
+const getSitemap = async ({ channelName, languageCode }) => {
 	return await store.getItem({ options, itemType: "sitemap", languageCode, itemID: channelName });
 }
+
+const getSitemapNested = async ({ channelName, languageCode }) => {
+	return await store.getItem({ options, itemType: "nestedsitemap", languageCode, itemID: channelName });
+}
+
 /**
  * Clear everything out.
  */
 const clear = async () => {
-	await store.clearItems({options});
+	await store.clearItems({ options });
 }
 
 
@@ -175,10 +184,13 @@ export default {
 	getContentList: getContentList,
 	getPage: getPage,
 	getSitemap: getSitemap,
+	getSitemapFlat: getSitemap,
+	getSitemapNested: getSitemapNested,
 	saveSitemap: saveSitemap,
+	saveSitemapNested: saveSitemapNested,
 	getSyncState: getSyncState,
 	saveSyncState: saveSyncState,
 	clear: clear,
-	setStore: setStore	
+	setStore: setStore
 }
 
