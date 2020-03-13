@@ -36,7 +36,7 @@ npm install @agility/content-sync
 ## Sync to Filesystem (using Defaults)
 1. Create a sync client:
     ```javascript
-    import agilitySync from '@agility/constent-sync'
+    import agilitySync from '@agility/content-sync'
     const syncClient = agilitySync.getSyncClient({
         //your 'guid' from Agility CMS
         guid: 'some-guid',
@@ -44,8 +44,10 @@ npm install @agility/content-sync
         apiKey: 'some-api-key',
         //the language(s) of content you want to source
         languages: ['en-us'],
-        //your channel(s) for the pages you want to source 
-        channels: ['website']
+        //your channel(s) for the pages you want to source
+		channels: ['website'],
+		//whether you are using the preview key or not
+		isPreview: false
     });
     ```
 
@@ -67,7 +69,7 @@ const syncClient = agilitySync.getSyncClient({
     apiKey: 'some-api-key',
     //the language(s) of content you want to source
     languages: ['en-us'],
-    //your channel(s) for the pages you want to source 
+    //your channel(s) for the pages you want to source
     channels: ['website'],
     //your custom storage/access interface
     store: {
@@ -92,12 +94,12 @@ const syncClient = agilitySync.getSyncClient({
     apiKey: 'some-api-key',
     //the language(s) of content you want to source
     languages: ['en-us'],
-    //your channel(s) for the pages you want to source 
+    //your channel(s) for the pages you want to source
     channels: ['website']
 });
 
 //start the sync process
-syncClient.runSync();
+await syncClient.runSync();
 
 //query and retrieve your content
 const contentItem = await syncClient.store.getContentItem({
@@ -111,6 +113,11 @@ const contentList = await syncClient.store.getContentList({
 })
 ```
 
+## Clearing out the Sync Content
+To clear out the locally synced content, run the clearSync command.
+```javascript
+await syncClient.clearSync();
+```
 
 ## How to Create your Own Sync Store
 Create a new `.js` file which exports the following methods:
