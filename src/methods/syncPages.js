@@ -4,9 +4,14 @@ export default async function (languageCode, token) {
     const storeInterface = this.store;
 	if (!token) token = 0;
 
+
+	logInfo(`Pulling Page Changes...`);
+
+	let itemCount = 0;
+
 	do {
 		//sync pages...
-		logInfo(`Pulling Page Changes using token: ${token}`);
+
 
 		const syncRet = await this.agilityClient.getSyncPages({
 			syncToken: token,
@@ -18,7 +23,6 @@ export default async function (languageCode, token) {
 
 		//if we don't get anything back, kick out
 		if (syncItems.length === 0) {
-			logInfo(`Page Sync returned no item(s).`);
 			break;
 		}
 
@@ -27,9 +31,16 @@ export default async function (languageCode, token) {
 		}
 
 		token = syncRet.syncToken;
-		logInfo(`Page Sync returned ${syncItems.length} item(s).`);
+		itemCount += syncItems.length;
+
 
 	} while (token > 0)
+
+	if (itemCount > 0) {
+		logInfo(`Page Sync returned ${itemCount} item(s).`);
+	} else {
+		logInfo(`Page Sync returned no item(s).`);
+	}
 
 
 	return token;

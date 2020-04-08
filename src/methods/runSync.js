@@ -23,13 +23,15 @@ export default async function () {
 
 
 			for (const channelName of channels) {
+				logInfo(`Updating Sitemap channel ${channelName} in ${languageCode}`);
+
 				const sitemap = await this.agilityClient.getSitemapFlat({ channelName, languageCode });
 				storeInterface.saveSitemap({ sitemap, languageCode, channelName });
 
 				const sitemapNested = await this.agilityClient.getSitemapNested({ channelName, languageCode });
 				storeInterface.saveSitemapNested({ sitemapNested, languageCode, channelName });
 
-				logInfo(`Updated Sitemap channels: ${channelName}`);
+
 			}
 
 
