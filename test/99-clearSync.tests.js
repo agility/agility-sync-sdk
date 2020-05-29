@@ -4,7 +4,7 @@ const expect = chai.expect;
 
 import { createSyncClient, createPreviewSyncClient } from './_syncClients.config'
 
-/* 
+/*
     This file contains static references to content from the instance configured in the apiClient.config file.
 */
 
@@ -13,7 +13,8 @@ const languageCode = 'en-us'
 describe('clearSync:', async function() {
 
     it('should run the clear sync method which should remove local files', async function() {
-        var sync = createSyncClient();
+		var sync = createSyncClient();
+
         await sync.clearSync();
 
         //test items are no longer there

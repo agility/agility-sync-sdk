@@ -19,7 +19,7 @@
 	},
 	"homepage": "https://github.com/agility/agility-sync-sdk#readme",
 	"dependencies": {
-		"@agility/content-fetch": "^0.8.1",
+		"@agility/content-fetch": "^0.8.2",
 		"dotenv": "^8.2.0"
 	},
 	"devDependencies": {

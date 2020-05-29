@@ -91,6 +91,14 @@ const saveSitemapNested = async ({ sitemapNested, channelName, languageCode }) =
 	await store.saveItem({ options, item: sitemapNested, itemType: "nestedsitemap", languageCode, itemID: channelName });
 }
 
+const saveUrlRedirections = async ({urlRedirections, languageCode}) => {
+	await store.saveItem({ options, item: urlRedirections, itemType: "urlredirections", languageCode, itemID: "urlredirections" });
+}
+
+const getUrlRedirections = async ({languageCode}) => {
+	return await store.getItem({ options, itemType: "urlredirections", languageCode, itemID: "urlredirections" });
+}
+
 const saveSyncState = async ({ syncState, languageCode }) => {
 	await store.saveItem({ options, item: syncState, itemType: "state", languageCode, itemID: "sync" });
 }
@@ -169,6 +177,8 @@ const getSitemapNested = async ({ channelName, languageCode }) => {
 	return await store.getItem({ options, itemType: "nestedsitemap", languageCode, itemID: channelName });
 }
 
+
+
 /**
  * Clear everything out.
  */
@@ -178,18 +188,20 @@ const clear = async () => {
 
 
 export default {
-	saveContentItem: saveContentItem,
-	savePageItem: savePageItem,
-	getContentItem: getContentItem,
-	getContentList: getContentList,
-	getPage: getPage,
-	getSitemap: getSitemap,
+	saveContentItem,
+	savePageItem,
+	getContentItem,
+	getContentList,
+	getPage,
+	getSitemap,
 	getSitemapFlat: getSitemap,
-	getSitemapNested: getSitemapNested,
-	saveSitemap: saveSitemap,
-	saveSitemapNested: saveSitemapNested,
-	getSyncState: getSyncState,
-	saveSyncState: saveSyncState,
+	getSitemapNested,
+	saveSitemap,
+	saveSitemapNested,
+	saveUrlRedirections,
+	getUrlRedirections,
+	getSyncState,
+	saveSyncState,
 	clear: clear,
 	setStore: setStore
 }
