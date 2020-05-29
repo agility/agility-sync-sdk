@@ -31,10 +31,20 @@ export default async function () {
 				const sitemapNested = await this.agilityClient.getSitemapNested({ channelName, languageCode });
 				storeInterface.saveSitemapNested({ sitemapNested, languageCode, channelName });
 
-
 			}
+		}
 
+		//save the redirects if they have changed...
+		let urlRedirections = await storeInterface.getUrlRedirections({languageCode});
+		let lastAccessDate = null;
+		if (urlRedirections) lastAccessDate = urlRedirections.lastAccessDate;
 
+		logInfo(`Updating URL Redirections from lastAccessDate: ${lastAccessDate}`);
+
+		urlRedirections = await this.agilityClient.getUrlRedirections({ lastAccessDate });
+		if (urlRedirections && urlRedirections.isUpToDate === false) {
+			logInfo(`Saving URL Redirections into cache`);
+			await storeInterface.saveUrlRedirections({urlRedirections, languageCode});
 		}
 
 		syncState.itemToken = newItemToken;

@@ -1,6 +1,6 @@
 {
 	"name": "@agility/content-sync",
-	"version": "0.1.6",
+	"version": "0.1.7",
 	"description": "JavaScript SDK for synchronizing content from Agility CMS",
 	"main": "dist/agility-sync-sdk.node.js",
 	"scripts": {
@@ -19,7 +19,7 @@
 	},
 	"homepage": "https://github.com/agility/agility-sync-sdk#readme",
 	"dependencies": {
-		"@agility/content-fetch": "^0.8.1",
+		"@agility/content-fetch": "^0.8.2",
 		"dotenv": "^8.2.0"
 	},
 	"devDependencies": {

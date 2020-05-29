@@ -10,16 +10,17 @@ import { createSyncClient, createPreviewSyncClient } from './_syncClients.config
 
 const languageCode = 'en-us'
 
-describe('store.getContentList:', async function() {
+describe('store.getUrlRedirections:', async function() {
 
-    it('should be able to retrieve an item from the store', async function() {
+    it('should be able to retrieve the redirections from the store', async function() {
         var syncClient = createSyncClient();
 
-        const contentList = await syncClient.store.getContentList({
-            referenceName: 'posts',
+        const redirections = await syncClient.store.getUrlRedirections({
             languageCode: languageCode
-        })
-        assert.strictEqual(contentList[0].properties.referenceName, "posts", 'retrieved the content list we asked for')
+		})
+
+		assert.isArray(redirections.items, 'items should be an array.')
+		assert.isBoolean(redirections.isUpToDate, 'isUpToDate should be a boolean.')
     })
 });
 
