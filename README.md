@@ -1,5 +1,5 @@
 # Agility CMS Sync SDK
-The Agility CMS Sync SDK provides an interface to maintain to sync, store and access content locally.
+The Agility CMS Sync SDK provides an interface to sync, store and access content locally.
 
 By keeping a local cache of your content, your web app can access content faster.
 
