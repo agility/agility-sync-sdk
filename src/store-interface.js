@@ -121,7 +121,11 @@ const expandContentItem = async ({ contentItem, languageCode, depth }) => {
 		if (!fields) fields = contentItem.customFields;
 		for (const fieldName in fields) {
 			const fieldValue = fields[fieldName];
-			if (fieldValue.contentid > 0) {
+			if(!fieldValue) {
+				//do nothing...
+				continue;
+			}
+			else if (fieldValue.contentid > 0) {
 				//single linked item
 				const childItem = await getContentItem({ contentID: fieldValue.contentid, languageCode, depth: depth - 1 });
 				if (childItem != null) fields[fieldName] = childItem;
