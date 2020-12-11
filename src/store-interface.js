@@ -260,7 +260,7 @@ const getPage = async ({ pageID, languageCode, depth = 3 }) => {
     itemID: pageID,
   });
 
-  if (depth > 0) {
+  if (depth > 0 && pageItem != null) {
     //if a depth was specified, pull in the modules (content items) for this page
     for (const zoneName in pageItem.zones) {
       const zone = pageItem.zones[zoneName];
