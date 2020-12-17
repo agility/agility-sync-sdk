@@ -31,11 +31,16 @@ const logDebug = (message) => {
 };
 
 
-export {
+const sleep = (ms) => {
+	return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+module.exports = {
 	logDebug,
 	logInfo,
 	logError,
 	logWarning,
 	logSuccess,
-	asyncForEach
+	asyncForEach,
+	sleep
 }

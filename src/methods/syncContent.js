@@ -1,5 +1,4 @@
-import { logInfo } from '../util'
-
+import { logInfo, logWarning, sleep } from '../util'
 
 
 /**
@@ -12,7 +11,11 @@ export default async function (languageCode, token) {
 
 	logInfo(`Pulling Content Changes...`);
 
-	let itemCount = 0;
+	let itemCount = 0
+	let busy = false
+	let waitMS = 0
+	const waitMaxMS = 30000
+	const waitIntervalMS = 500
 
 	do {
 
@@ -23,6 +26,31 @@ export default async function (languageCode, token) {
 			languageCode: languageCode,
 
 		});
+
+		if (syncRet.busy !== undefined
+			&& syncRet.busy === true) {
+			//if the api is being updated, wait a few ms and try again...
+			waitMS += waitIntervalMS
+			if (waitMS > waitMaxMS) {
+				logWarning("Sync API has been busy for too long, canceling.")
+				break
+			}
+
+			if (! busy) {
+				//first time we're busy...
+				busy = true
+				logInfo("Sync API is busy.  Waiting...")
+			}
+
+			await sleep(waitIntervalMS)
+			continue
+		}
+
+		if (busy === true) {
+			logInfo("Continuing sync...")
+			busy = false
+			waitMS = 0
+		}
 
 		const syncItems = syncRet.items;
 
@@ -38,7 +66,7 @@ export default async function (languageCode, token) {
 		token = syncRet.syncToken;
 		itemCount += syncItems.length;
 
-	} while (token > 0)
+	} while (token > 0 || busy === true)
 
 	if (itemCount > 0) {
 		logInfo(`Content Sync returned ${itemCount} item(s).`);

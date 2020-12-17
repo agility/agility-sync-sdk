@@ -1,5 +1,9 @@
 const fs = require('fs')
+const os = require('os')
 const path = require('path')
+const {sleep} = require("./util")
+const { lockSync, unlockSync, checkSync, check }  = require("proper-lockfile")
+
 
 require("dotenv").config({
 	path: `.env.${process.env.NODE_ENV}`,
@@ -85,11 +89,50 @@ const clearItems = async ({ options }) => {
 	fs.rmdirSync(options.rootPath, { recursive: true })
 }
 
+const waitOnLock = async (lockFile) => {
+
+	while (await check(lockFile)) {
+		await sleep(100)
+	}
+
+}
+
+const mutexLock = async () => {
+
+
+	const dir = os.tmpdir();
+	const lockFile = `${dir}/${"agility-sync"}.mutex`
+	if (! fs.existsSync(lockFile)) {
+		fs.writeFileSync(lockFile, "agility-sync");
+	}
+
+	//THE LOCK IS ALREADY HELD - WAIT UP!
+	await waitOnLock(lockFile)
+
+	try {
+		return lockSync(lockFile)
+	} catch (err) {
+		if (`${err}`.indexOf("Lock file is already being held") !== -1) {
+			//this error happens when 2 processes try to get a lock at the EXACT same time (very rare)
+			await sleep(100)
+			await waitOnLock(lockFile)
+			return lockSync(lockFile)
+		}
+
+		throw Error("The mutex lock could not be obtained.")
+	}
+
+}
+
+
+
+
 
 module.exports = {
 	saveItem,
 	deleteItem,
 	mergeItemToList,
 	getItem,
-	clearItems
+	clearItems,
+	mutexLock
 }
