@@ -4,9 +4,6 @@ export default async function (languageCode, token) {
     const storeInterface = this.store;
 	if (!token) token = 0;
 
-
-	logInfo(`Pulling Page Changes...`);
-
 	let itemCount = 0;
 
 	let busy = false

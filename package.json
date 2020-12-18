@@ -1,6 +1,6 @@
 {
   "name": "@agility/content-sync",
-  "version": "0.1.21",
+  "version": "0.1.22",
   "description": "JavaScript SDK for synchronizing content from Agility CMS",
   "main": "dist/agility-sync-sdk.node.js",
   "scripts": {
@@ -13,7 +13,7 @@
     "type": "git",
     "url": "git+https://github.com/agility/agility-sync-sdk.git"
   },
-  "author": "James Vidler",
+  "author": "Agility CMS",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/agility/agility-sync-sdk/issues"

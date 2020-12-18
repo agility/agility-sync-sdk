@@ -59,6 +59,10 @@ typings/
 .rts2_cache_es/
 .rts2_cache_umd/
 
+# any cache files
+cache/preview/
+cache/live/
+
 # Optional REPL history
 .node_repl_history
 

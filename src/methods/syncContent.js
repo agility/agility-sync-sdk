@@ -9,8 +9,6 @@ export default async function (languageCode, token) {
 
 	if (!token) token = 0;
 
-	logInfo(`Pulling Content Changes...`);
-
 	let itemCount = 0
 	let busy = false
 	let waitMS = 0

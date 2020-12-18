@@ -34,6 +34,7 @@ const sync = async (clientObj) => {
 	const channels = clientObj.config.channels;
 	const storeInterface = clientObj.store;
 
+	const modeStr = clientObj.config.isPreview ? "preview" : "live"
 
 	for (const languageCode of languageCodes) {
 
@@ -45,20 +46,17 @@ const sync = async (clientObj) => {
 		const lastSyncDate = syncState.lastSyncDate || null
 		//run at MOST once a second
 		if (lastSyncDate && (new Date()) - new Date(lastSyncDate) < 1000) {
-			logInfo(`Skipping Sync for ${languageCode} (last sync finished less than 1sec ago).`);
+			//skip sync...
 			continue;
 		}
 
-		logSuccess(`Starting Sync for ${languageCode}`);
-
-
+		logSuccess(`Starting Sync for ${languageCode} - ${modeStr} mode.`);
 		const newItemToken = await clientObj.syncContent(languageCode, syncState.itemToken);
 		const newPageToken = await clientObj.syncPages(languageCode, syncState.pageToken);
 
 		if (newItemToken != syncState.itemToken
 			|| newPageToken != syncState.pageToken) {
 			//if we sync ANYTHING - pull the new sitemap down
-
 
 			for (const channelName of channels) {
 				logInfo(`Updating Sitemap channel ${channelName} in ${languageCode}`);
@@ -77,11 +75,9 @@ const sync = async (clientObj) => {
 		let lastAccessDate = null;
 		if (urlRedirections) lastAccessDate = urlRedirections.lastAccessDate;
 
-		logInfo(`Updating URL Redirections from lastAccessDate: ${lastAccessDate}`);
-
 		urlRedirections = await clientObj.agilityClient.getUrlRedirections({ lastAccessDate });
 		if (urlRedirections && urlRedirections.isUpToDate === false) {
-			logInfo(`Saving URL Redirections into cache`);
+			logInfo(`URL Redirections Updated and Saved`);
 			await storeInterface.saveUrlRedirections({ urlRedirections, languageCode });
 		}
 
@@ -91,7 +87,7 @@ const sync = async (clientObj) => {
 
 		await storeInterface.saveSyncState({ syncState, languageCode });
 
-		logSuccess(`Completed Sync for ${languageCode}`);
+		logSuccess(`Completed Sync for ${languageCode} - ${modeStr} mode.`);
 	}
 }
 
