@@ -113,10 +113,22 @@ const mutexLock = async () => {
 		return lockSync(lockFile)
 	} catch (err) {
 		if (`${err}`.indexOf("Lock file is already being held") !== -1) {
+
 			//this error happens when 2 processes try to get a lock at the EXACT same time (very rare)
 			await sleep(100)
 			await waitOnLock(lockFile)
-			return lockSync(lockFile)
+
+			try {
+				return lockSync(lockFile)
+			} catch (e2) {
+				if (`${err}`.indexOf("Lock file is already being held") !== -1) {
+
+					//this error happens when 2 processes try to get a lock at the EXACT same time (very rare)
+					await sleep(100)
+					await waitOnLock(lockFile)
+					return lockSync(lockFile)
+				}
+			}
 		}
 
 		throw Error("The mutex lock could not be obtained.")
