@@ -84,12 +84,28 @@ const saveContentItem = async ({ contentItem, languageCode }) => {
 		});
 		if (currentItem) {
 
+			//if the item is deleted, we need to grab the def and ref name from the current
+			definitionName = sanitizeName(currentItem.properties.definitionName)
+			referenceName = currentItem.properties.referenceName
+
 			await store.deleteItem({
 				options,
 				itemType: "item",
 				languageCode,
 				itemID: contentItem.contentID,
 			});
+
+			if (referenceName) {
+				//delete the item by reference name - it might need to be merged into a list
+				await store.mergeItemToList({
+					options,
+					item: contentItem,
+					languageCode,
+					itemID: contentItem.contentID,
+					referenceName,
+					definitionName,
+				});
+			}
 
 		}
 	} else {
