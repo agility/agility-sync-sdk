@@ -94,19 +94,6 @@ const saveContentItem = async ({ contentItem, languageCode }) => {
 				languageCode,
 				itemID: contentItem.contentID,
 			});
-
-			if (referenceName) {
-				//delete the item by reference name - it might need to be merged into a list
-				await store.mergeItemToList({
-					options,
-					item: contentItem,
-					languageCode,
-					itemID: contentItem.contentID,
-					referenceName,
-					definitionName,
-				});
-			}
-
 		}
 	} else {
 		//regular item
@@ -128,7 +115,7 @@ const saveContentItem = async ({ contentItem, languageCode }) => {
 	}
 
 	if (referenceName) {
-		//save the item by reference name - it might need to be merged into a list
+		//merge the item by reference or definition name - it might need to be merged into a list
 		await store.mergeItemToList({
 			options,
 			item: contentItem,
