@@ -41,7 +41,6 @@ describe('store.getContentList:', async function() {
         assert.exists(contentList.items[0].fields,  'retrieved the item of the content list we asked for')
 		assert.strictEqual(contentList.items.length, 1,  'retrieved only the item of the content list we asked for')
 
-		assert.exists(contentList.items[0].fields.author.fields, 'expanded the author field on the post that was returned')
     })
 });
 
