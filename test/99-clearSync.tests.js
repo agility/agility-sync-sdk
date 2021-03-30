@@ -12,7 +12,7 @@ import { createSyncClient, createPreviewSyncClient } from './_syncClients.config
 const languageCode = 'en-us'
 describe('clearSync:', async function() {
 
-    it('should run the clear sync method which should remove local files', async function() {
+	it('should run the clear sync method which should remove local files', async function() {
 		var sync = createSyncClient();
 
         await sync.clearSync();

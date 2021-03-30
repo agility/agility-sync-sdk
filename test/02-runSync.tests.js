@@ -18,7 +18,6 @@ const sleep = (ms) => {
 
 describe('runSync:', async function () {
 
-
 	this.timeout('120s');
 
 	it('should run 1 sync method using the filesystem', async function () {

@@ -210,17 +210,27 @@ const getSyncState = async (languageCode) => {
 	});
 };
 
-const getContentItem = async ({ contentID, languageCode, depth = 2 }) => {
+/**
+ * Gets the details of a content item by its Content ID.
+ * @memberof AgilitySync.Client.Content
+ * @param {Object} requestParams - The paramters for the SDK request.
+ * @param {number} requestParams.contentID - The contentID of the requested item in this language.
+ * @param {string} requestParams.languageCode - The language code of the content you want to retrieve.
+ * @param {number} [requestParams.depth] - The depth, representing the levels in which you want linked content auto-resolved. Default is **1**.
+ * @param {boolean} [requestParams.expandAllContentLinks] - Whether or not to expand entire linked content references, includings lists and items that are rendered in the CMS as Grid or Link. Default is **false**
+ * @returns {Promise<Object>} - Returns a content item object.
+*/
+const getContentItem = async ({ contentID, languageCode, depth = 2, expandAllContentLinks = false }) => {
 	const contentItem = await store.getItem({
 		options,
 		itemType: "item",
 		languageCode,
 		itemID: contentID,
 	});
-	return await expandContentItem({ contentItem, languageCode, depth });
+	return await expandContentItem({ contentItem, languageCode, depth, expandAllContentLinks });
 };
 
-const expandContentItem = async ({ contentItem, languageCode, depth }) => {
+const expandContentItem = async ({ contentItem, languageCode, depth, expandAllContentLinks = false }) => {
 	if (!contentItem) return null;
 
 	if (depth > 0) {
@@ -249,23 +259,98 @@ const expandContentItem = async ({ contentItem, languageCode, depth }) => {
 						contentID: childItemID,
 						languageCode,
 						depth: depth - 1,
+						expandAllContentLinks
 					});
 					if (childItem != null) childItems.push(childItem);
 				}
 				fields[fieldName] = childItems;
+			} else if (fieldValue.referencename
+				&& expandAllContentLinks === true) {
+					//if we are expanding ALL content links...
+
+					const childList = await getContentList({
+						referenceName: fieldValue.referencename,
+						languageCode,
+						depth: depth - 1,
+						expandAllContentLinks,
+						take: 50
+					})
+
+					fields[fieldName] = childList
+
 			}
 		}
 	}
 	return contentItem;
 };
 
-const getContentList = async ({ referenceName, languageCode }) => {
-	return await store.getItem({
+
+
+/**
+ * Retrieves a list of content items by reference name.  If skip or take has been specified, returns an object with an items array and totalCount property.  Otherwise returns an array of items.
+ * @memberof AgilitySync.Client.Content
+ * @param {Object} requestParams - The parameters for this request.
+ * @param {string} requestParams.referenceName - The unique reference name of the content list you wish to retrieve in the specified language.
+ * @param {string} requestParams.languageCode - The language code of the content you want to retrieve.
+ * @param {number} [requestParams.depth] - The depth, representing the levels in which you want linked content auto-resolved. Default is **1**.
+ * @param {boolean} [requestParams.expandAllContentLinks] - Whether or not to expand entire linked content references, includings lists and items that are rendered in the CMS as Grid or Link. Default is **false**
+ * @param {number} [requestParams.take] - The maximum number of items to retrieve in this request.
+ * @param {number} [requestParams.skip] - The number of items to skip from the list. Used for implementing pagination.
+ * @returns {Promise<[] | Object>} - Returns a list of content items, or, if skip or take has been specified, an object with an items array and totalCount property.
+*/
+const getContentList = async ({ referenceName, languageCode, depth = 0, expandAllContentLinks = false, skip = -1, take = -1 }) => {
+
+	let lst = await store.getItem({
 		options,
 		itemType: "list",
 		languageCode,
 		itemID: referenceName,
-	});
+	}) || [];
+
+	if (depth > 0 && take === -1) {
+		throw new Error("If you specify depth > 0, you must also specify the take parameter.")
+	}
+
+	if (expandAllContentLinks && take === -1) {
+		throw new Error("If you specify expandAllContentLinks=true, you must also specify the take parameter.")
+	}
+
+	const totalCount = lst.length
+
+	if (skip > 0 && skip < lst.length) {
+		lst = lst.slice(skip)
+	}
+
+	if (take > 0 && take < lst.length) {
+		lst = lst.slice(0, take)
+	}
+
+	if (depth > 0) {
+		for (let i=0; i<lst.length;i++) {
+			lst[i] = await expandContentItem({
+				contentItem: lst[i],
+				depth: depth - 1,
+				languageCode,
+				expandAllContentLinks
+			})
+		}
+	}
+
+	if (skip > 0 || take > 0) {
+		//if we have sliced this array, return an object with an items and totalCount property
+		return {
+			items: lst,
+			totalCount
+		}
+	} else {
+		//just return the full list
+		return lst
+	}
+
+
+
+
+
 };
 /**
  * Get a Page based on it's id and languageCode.
