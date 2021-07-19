@@ -58,32 +58,6 @@ npm install @agility/content-sync
     ```
     `runSync()` will pull down all your *Sitemap*, *Pages*, and *Content* and store them in your local filesystem under the default path `.agility-files`.
 
-## Sync using a Custom Store
-While this SDK provides a filesystem sync interface by default, you can change this and use another one or create your own.
-```javascript
-import agilitySync from '@agility/constent-sync'
-import aSampleSyncConsoleInterface from './store-interface-console'
-const syncClient = agilitySync.getSyncClient({
-    //your 'guid' from Agility CMS
-    guid: 'some-guid',
-    //your 'apiKey' from Agility CMS
-    apiKey: 'some-api-key',
-    //the language(s) of content you want to source
-    languages: ['en-us'],
-    //your channel(s) for the pages you want to source
-    channels: ['website'],
-    //your custom storage/access interface
-    store: {
-        //must be the interface used to store and access content
-        interface: aSampleSyncConsoleInterface,
-        //any options/config that you want to pass along to your interface as an argument 'options'
-        options: {}
-    }
-});
-//start the sync process
-syncClient.runSync();
-```
-
 ## Accessing Content
 Once content is in your sync store, you can easily access it as you need it:
 ```javascript
@@ -121,13 +95,13 @@ await syncClient.clearSync();
 ```
 
 ## How to Create your Own Sync Store
-Create a new `.js` file which exports the following methods:
+While this SDK provides a filesystem sync interface by default, you can change this and use another one or create your own.
+1. Create a new `.js` file which exports the following methods:
 ```javascript
 /**
  * The function to handle saving/updating an item to your storage. This could be a Content Item, Page, Url Redirections, Sync State (state), or Sitemap.
  * @param {Object} params - The parameters object
  * @param {Object} params.options - A flexible object that can contain any properties specifically related to this interface
- * @param {String} params.options.rootPath - The path to store/access the content as JSON 
  * @param {Object} params.item - The object representing the Content Item, Page, Url Redirections, Sync State (state), or Sitemap that needs to be saved/updated
  * @param {String} params.itemType - The type of item being saved/updated, expected values are `item`, `page`, `sitemap`, `nestedsitemap`, `state`, `urlredirections`
  * @param {String} params.languageCode - The locale code associated to the item being saved/updated
@@ -142,7 +116,6 @@ const saveItem = async ({ options, item, itemType, languageCode, itemID }) => {
  * The function to handle deleting an item to your storage. This could be a Content Item, Page, Url Redirections, Sync State (state), or Sitemap.
  * @param {Object} params - The parameters object
  * @param {Object} params.options - A flexible object that can contain any properties specifically related to this interface
- * @param {String} params.options.rootPath - The path to store/access the content as JSON 
  * @param {String} params.itemType - The type of item being deleted, expected values are `item`, `page`, `sitemap`, `nestedsitemap`, `state`, `urlredirections`
  * @param {String} params.languageCode - The locale code associated to the item being saved/updated
  * @param {(String|Number)} params.itemID - The ID of the item being deleted - this could be a string or number depending on the itemType
@@ -156,7 +129,6 @@ const deleteItem = async ({ options, itemType, languageCode, itemID }) => {
  * The function to handle updating and placing a Content Item into a "list" so that you can handle querying a collection of items.
  * @param {Object} params - The parameters object
  * @param {Object} params.options - A flexible object that can contain any properties specifically related to this interface
- * @param {String} params.options.rootPath - The path to store/access the content as JSON 
  * @param {Object} params.item - The object representing the Content Item
  * @param {String} params.languageCode - The locale code associated to the item being saved/updated 
  * @param {(String|Number)} params.itemID - The ID of the item being updated - this could be a string or number depending on the itemType
@@ -172,7 +144,6 @@ const mergeItemToList = async ({ options, item, languageCode, itemID, referenceN
  * The function to handle retrieving a Content Item, Page, Url Redirections, Sync State (state), or Sitemap
  * @param {Object} params - The parameters object
  * @param {Object} params.options - A flexible object that can contain any properties specifically related to this interface
- * @param {String} params.options.rootPath - The path to store/access the content as JSON 
  * @param {String} params.itemType - The type of item being accessed, expected values are `item`, `list`, `page`, `sitemap`, `nestedsitemap`, `state`, `urlredirections`
  * @param {String} params.languageCode - The locale code associated to the item being accessed
  * @param {(String|Number)} params.itemID - The ID of the item being accessed - this could be a string or number depending on the itemType
@@ -186,7 +157,6 @@ const getItem = async ({ options, itemType, languageCode, itemID }) => {
  * The function to handle clearing the cache of synchronized data from the CMS
  * @param {Object} params - The parameters object
  * @param {Object} params.options - A flexible object that can contain any properties specifically related to this interface
- * @param {String} params.options.rootPath - The path to store/access the content as JSON 
  * @returns {Void}
  */
 const clearItems = async ({ options }) => {
@@ -201,6 +171,30 @@ module.exports = {
     getItem,
     clearItems
 }
+```
+2. Register the `syncClient` to use your **Sync Store**
+```javascript
+import agilitySync from '@agility/constent-sync'
+import sampleSyncConsoleInterface from './store-interface-console'
+const syncClient = agilitySync.getSyncClient({
+    //your 'guid' from Agility CMS
+    guid: 'some-guid',
+    //your 'apiKey' from Agility CMS
+    apiKey: 'some-api-key',
+    //the language(s) of content you want to source
+    languages: ['en-us'],
+    //your channel(s) for the pages you want to source
+    channels: ['website'],
+    //your custom storage/access interface
+    store: {
+        //must be the interface used to store and access content
+        interface: sampleSyncConsoleInterface,
+        //any options/config that you want to pass along to your interface as an argument 'options'
+        options: {}
+    }
+});
+//start the sync process
+syncClient.runSync();
 ```
 
 

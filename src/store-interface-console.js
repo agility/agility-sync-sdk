@@ -2,7 +2,6 @@
  * The function to handle saving/updating an item to your storage. This could be a Content Item, Page, Url Redirections, Sync State (state), or Sitemap.
  * @param {Object} params - The parameters object
  * @param {Object} params.options - A flexible object that can contain any properties specifically related to this interface
- * @param {String} params.options.rootPath - The path to store/access the content as JSON 
  * @param {Object} params.item - The object representing the Content Item, Page, Url Redirections, Sync State (state), or Sitemap that needs to be saved/updated
  * @param {String} params.itemType - The type of item being saved/updated, expected values are `item`, `page`, `sitemap`, `nestedsitemap`, `state`, `urlredirections`
  * @param {String} params.languageCode - The locale code associated to the item being saved/updated
@@ -17,7 +16,6 @@ const saveItem = async ({ options, item, itemType, languageCode, itemID }) => {
  * The function to handle deleting an item to your storage. This could be a Content Item, Page, Url Redirections, Sync State (state), or Sitemap.
  * @param {Object} params - The parameters object
  * @param {Object} params.options - A flexible object that can contain any properties specifically related to this interface
- * @param {String} params.options.rootPath - The path to store/access the content as JSON 
  * @param {String} params.itemType - The type of item being deleted, expected values are `item`, `page`, `sitemap`, `nestedsitemap`, `state`, `urlredirections`
  * @param {String} params.languageCode - The locale code associated to the item being saved/updated
  * @param {(String|Number)} params.itemID - The ID of the item being deleted - this could be a string or number depending on the itemType
@@ -31,7 +29,6 @@ const deleteItem = async ({ options, itemType, languageCode, itemID }) => {
  * The function to handle updating and placing a Content Item into a "list" so that you can handle querying a collection of items.
  * @param {Object} params - The parameters object
  * @param {Object} params.options - A flexible object that can contain any properties specifically related to this interface
- * @param {String} params.options.rootPath - The path to store/access the content as JSON 
  * @param {Object} params.item - The object representing the Content Item
  * @param {String} params.languageCode - The locale code associated to the item being saved/updated 
  * @param {(String|Number)} params.itemID - The ID of the item being updated - this could be a string or number depending on the itemType
@@ -47,7 +44,6 @@ const mergeItemToList = async ({ options, item, languageCode, itemID, referenceN
  * The function to handle retrieving a Content Item, Page, Url Redirections, Sync State (state), or Sitemap
  * @param {Object} params - The parameters object
  * @param {Object} params.options - A flexible object that can contain any properties specifically related to this interface
- * @param {String} params.options.rootPath - The path to store/access the content as JSON 
  * @param {String} params.itemType - The type of item being accessed, expected values are `item`, `list`, `page`, `sitemap`, `nestedsitemap`, `state`, `urlredirections`
  * @param {String} params.languageCode - The locale code associated to the item being accessed
  * @param {(String|Number)} params.itemID - The ID of the item being accessed - this could be a string or number depending on the itemType
@@ -61,7 +57,6 @@ const getItem = async ({ options, itemType, languageCode, itemID }) => {
  * The function to handle clearing the cache of synchronized data from the CMS
  * @param {Object} params - The parameters object
  * @param {Object} params.options - A flexible object that can contain any properties specifically related to this interface
- * @param {String} params.options.rootPath - The path to store/access the content as JSON 
  * @returns {Void}
  */
 const clearItems = async ({ options }) => {
