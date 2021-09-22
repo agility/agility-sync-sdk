@@ -12,10 +12,11 @@ By keeping a local cache of your content, your web app can access content faster
 
 ## Use Cases
 1. You want to reduce the amount of REST API calls made to your Agility CMS instance.
-2. You want so synchronize content from the CMS to another system such Redis Cache
-3. You are running a **Server-Side Rendered (SSR)** web app and you want to cache your content locally, reducing latency for retrieving content.
-4. You are using a **Static Site Generator (SSG)** and you don't want to have to re-source all of your content on each build.
-5. You have a client-side **Single Page Application**, and want to cache content in local storage in the browser.
+2. You have a client-side Single Page Application, and want to cache content in local storage in the browser.
+3. You want so synchronize content from the CMS to another system such Redis Cache
+4. You are running a **Server-Side Rendered (SSR)** web app and you want to cache your content locally, reducing latency for retrieving content.
+5. You are using a **Static Site Generator (SSG)** and you don't want to have to re-source all of your content on each build.
+6. You have a client-side **Single Page Application**, and want to cache content in local storage in the browser.
 
 ## How it Works
 This Sync SDK uses the Sync API `getSyncPages` and `getSyncContent` found in our [Agility CMS Content Fetch JS SDK](https://agilitydocs.netlify.com/agility-content-fetch-js-sdk/) and aims to abstract some of the complexities involved in managing synced content.
