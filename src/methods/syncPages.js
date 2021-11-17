@@ -1,7 +1,7 @@
 import { logInfo, logWarning, sleep } from '../util'
 
 export default async function (languageCode, token) {
-    const storeInterface = this.store;
+	const storeInterface = this.store;
 	if (!token) token = 0;
 
 	let itemCount = 0;
@@ -29,7 +29,7 @@ export default async function (languageCode, token) {
 				break
 			}
 
-			if (! busy) {
+			if (!busy) {
 				busy = true
 				logInfo("Sync API is busy.  Waiting...")
 			}
@@ -46,16 +46,21 @@ export default async function (languageCode, token) {
 
 		const syncItems = syncRet.items;
 
-		//if we don't get anything back, kick out
-		if (syncItems.length === 0) {
+		//if we have something...
+		if (syncItems.length > 0) {
+
+
+			for (let index = 0; index < syncItems.length; index++) {
+				await storeInterface.savePageItem({ pageItem: syncItems[index], languageCode });
+			}
+		}
+
+		if (syncRet.syncToken > token) {
+			token = syncRet.syncToken;
+		} else {
 			break;
 		}
 
-		for (let index = 0; index < syncItems.length; index++) {
-			await storeInterface.savePageItem({ pageItem: syncItems[index], languageCode });
-		}
-
-		token = syncRet.syncToken;
 		itemCount += syncItems.length;
 
 

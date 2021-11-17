@@ -53,15 +53,19 @@ export default async function (languageCode, token) {
 		const syncItems = syncRet.items;
 
 		//if we don't get anything back, kick out
-		if (syncItems.length === 0) {
+		if (syncItems.length > 0 ) {
+
+			for (let index = 0; index < syncItems.length; index++) {
+				await storeInterface.saveContentItem({ contentItem: syncItems[index], languageCode });
+			}
+		}
+
+		if (syncRet.syncToken > token) {
+			token = syncRet.syncToken;
+		} else {
 			break;
 		}
 
-		for (let index = 0; index < syncItems.length; index++) {
-			await storeInterface.saveContentItem({ contentItem: syncItems[index], languageCode });
-		}
-
-		token = syncRet.syncToken;
 		itemCount += syncItems.length;
 
 	} while (token > 0 || busy === true)
