@@ -9,7 +9,7 @@ import storeInterfaceFileSystem from './store-interface-filesystem'
 
 function getSyncClient (userConfig) {
     validateConfigParams(userConfig);
-    return createSyncCient(userConfig);
+    return createSyncClient(userConfig);
 }
 
 function validateConfigParams(configParams) {
@@ -39,11 +39,11 @@ const defaultConfig = {
     }
 };
 
-function createSyncCient(userConfig) {
+function createSyncClient(userConfig) {
     let config = {
         ...defaultConfig,
         ...userConfig
-        
+
     }
 
     const agilityClient = agility.getApi({
@@ -60,7 +60,7 @@ function createSyncCient(userConfig) {
 
     //set the sync storage interface provider, it will also validate it
     storeInterface.setStore(store, config.store.options);
-    
+
     return {
         config,
         agilityClient,

@@ -220,7 +220,14 @@ const getSyncState = async (languageCode) => {
  * @param {boolean} [requestParams.expandAllContentLinks] - Whether or not to expand entire linked content references, includings lists and items that are rendered in the CMS as Grid or Link. Default is **false**
  * @returns {Promise<Object>} - Returns a content item object.
 */
-const getContentItem = async ({ contentID, languageCode, depth = 2, expandAllContentLinks = false }) => {
+const getContentItem = async ({ contentID, languageCode, depth, contentLinkDepth, expandAllContentLinks = false }) => {
+
+	if (depth === undefined && contentLinkDepth !== undefined) {
+		depth = contentLinkDepth
+	} else if (depth === undefined && contentLinkDepth === undefined) {
+		depth = 2
+	}
+
 	const contentItem = await store.getItem({
 		options,
 		itemType: "item",
@@ -250,33 +257,92 @@ const expandContentItem = async ({ contentItem, languageCode, depth, expandAllCo
 					depth: depth - 1,
 				});
 				if (childItem != null) fields[fieldName] = childItem;
-			} else if (fieldValue.sortids && fieldValue.sortids.split) {
-				//multi linked item
-				const sortIDAry = fieldValue.sortids.split(",");
+			} else if (fieldValue.fulllist === true
+							&& fieldValue.referencename
+							&& expandAllContentLinks === true) {
+
+				//LINK TO THE FULL LIST
+				const referenceName = fieldValue.referencename
+
+				const skip = 0
+				const take = 50
+
+				const list = await getContentList({
+					referenceName,
+					languageCode,
+					depth: depth - 1,
+					expandAllContentLinks,
+					skip,
+					take
+				})
+
+				let sortIDAry = []
+
+				if (fieldValue.sortids && fieldValue.sortids.split) {
+					sortIDAry = fieldValue.sortids.split(",");
+				}
+
+				let itemCount = 0
 				const childItems = [];
 				for (const childItemID of sortIDAry) {
+					itemCount++
 					const childItem = await getContentItem({
 						contentID: childItemID,
+						languageCode,
+						depth: depth - 1,
+						expandAllContentLinks,
+						skip,
+						take
+					});
+
+					if (childItem != null) {
+						childItems.push(childItem);
+					}
+				}
+
+				for (const listItem of list) {
+					itemCount++
+					if (itemCount > 50) break;
+
+					const listItemContentID = listItem.contentID
+					if (sortIDAry.includes(`${listItemContentID}`)) {
+						continue;
+					}
+
+					const childItem = await getContentItem({
+						contentID: listItemContentID,
 						languageCode,
 						depth: depth - 1,
 						expandAllContentLinks
 					});
 					if (childItem != null) childItems.push(childItem);
 				}
-				fields[fieldName] = childItems;
-			} else if (fieldValue.referencename
-				&& expandAllContentLinks === true) {
-					//if we are expanding ALL content links...
 
-					const childList = await getContentList({
-						referenceName: fieldValue.referencename,
+				fields[fieldName] = childItems;
+
+			} else if (fieldValue.sortids && fieldValue.sortids.split && fieldValue.fulllist !== true) {
+				//MULTI LINKED ITEM
+				let sortIDAry = []
+				if (fieldValue.sortids && fieldValue.sortids.split) {
+					sortIDAry = fieldValue.sortids.split(",");
+				}
+
+				const skip = expandAllContentLinks ? 0 : undefined
+				const take = expandAllContentLinks ? 50 : undefined
+
+				const childItems = [];
+				for (const childItemID of sortIDAry) {
+					const childItem = await getContentItem({
+						contentID: childItemID,
 						languageCode,
 						depth: depth - 1,
 						expandAllContentLinks,
-						take: 50
-					})
-
-					fields[fieldName] = childList
+						skip,
+						take
+					});
+					if (childItem != null) childItems.push(childItem);
+				}
+				fields[fieldName] = childItems;
 
 			}
 		}
@@ -357,7 +423,14 @@ const getContentList = async ({ referenceName, languageCode, depth = 0, expandAl
  * @param {*} { pageID, languageCode, depth = 3 }
  * @returns
  */
-const getPage = async ({ pageID, languageCode, depth = 3 }) => {
+const getPage = async ({ pageID, languageCode, depth, contentLinkDepth, expandAllContentLinks = false }) => {
+
+	if (depth === undefined && contentLinkDepth !== undefined) {
+		depth = contentLinkDepth
+	} else if (depth === undefined && contentLinkDepth === undefined) {
+		depth = 2
+	}
+
 	let pageItem = await store.getItem({
 		options,
 		itemType: "page",
@@ -376,6 +449,7 @@ const getPage = async ({ pageID, languageCode, depth = 3 }) => {
 					contentID: mod.item.contentid,
 					languageCode,
 					depth: depth - 1,
+					expandAllContentLinks
 				});
 				mod.item = moduleItem;
 			}
