@@ -8,8 +8,8 @@ export default async function (languageCode, token) {
 
 	let busy = false
 	let waitMS = 0
-	const waitMaxMS = 30000
-	const waitIntervalMS = 500
+	const waitMaxMS = 60000
+	const waitIntervalMS = 1000
 
 
 	do {
@@ -20,8 +20,7 @@ export default async function (languageCode, token) {
 			languageCode: languageCode
 		});
 
-		if (syncRet.busy !== undefined
-			&& syncRet.busy === true) {
+		if (syncRet === undefined || syncRet === null || (syncRet.busy !== undefined && syncRet.busy === true)) {
 			//if the api is being updated, wait a few ms and try again...
 			waitMS += waitIntervalMS
 			if (waitMS > waitMaxMS) {
