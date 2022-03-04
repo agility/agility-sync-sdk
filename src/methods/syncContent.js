@@ -16,11 +16,10 @@ export default async function (languageCode, token) {
 	const waitIntervalMS = 1000
 
 	do {
-		let syncRet = null
 
 
 		//sync content items...
-		syncRet = await this.agilityClient.getSyncContent({
+		const syncRet = await this.agilityClient.getSyncContent({
 			syncToken: token,
 			pageSize: 100,
 			languageCode: languageCode,
@@ -28,7 +27,7 @@ export default async function (languageCode, token) {
 		});
 
 
-		if (syncRet === undefined || (syncRet.busy !== undefined && syncRet.busy === true)) {
+		if (syncRet === undefined || syncRet === null || (syncRet.busy !== undefined && syncRet.busy === true)) {
 			//if the api is being updated, wait a few ms and try again...
 			waitMS += waitIntervalMS
 			if (waitMS > waitMaxMS) {
