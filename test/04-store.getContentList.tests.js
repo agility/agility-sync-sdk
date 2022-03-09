@@ -42,5 +42,26 @@ describe('store.getContentList:', async function() {
 		assert.strictEqual(contentList.items.length, 1,  'retrieved only the item of the content list we asked for')
 
     })
+
+
+    it('should be able to expand a nested list with expandAllContentLinks', async function () {
+        var syncClient = createSyncClient();
+
+        const contentList = await syncClient.store.getContentList({
+            referenceName: 'listwithnestedcontentlink',
+            languageCode: languageCode,
+            depth: 10,
+            take: 50,
+            skip: 0,
+            expandAllContentLinks: true
+        })
+
+        assert.isAtLeast(contentList.totalCount, 1, 'retrieved the totalCount of the content list we asked for')
+        assert.exists(contentList.items, 'retrieved the items of the content list we asked for')
+        assert.exists(contentList.items[0].fields, 'retrieved the item of the content list we asked for')
+        assert.isAtLeast(contentList.items[0].fields.posts.length, 1, 'expanded the linked cotnent of the posts field')
+
+
+    })
 });
 
