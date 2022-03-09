@@ -15,7 +15,8 @@ function createSyncClient() {
         apiKey: apiKeyFetch,
         isPreview: false,
         channels: [ 'website'],
-		languages: ['en-us']
+        languages: ['en-us'],
+        baseUrl: "https://api-dev.aglty.io"
 	});
 
     return syncClient;
@@ -31,7 +32,8 @@ function createSyncClientUsingConsoleStore() {
         store: {
             interface: storeInterfaceConsole,
             options: {}
-        }
+        },
+        baseUrl: "https://api-dev.aglty.io"
     });
     return syncClient;
 }
@@ -43,7 +45,8 @@ function createPreviewSyncClient() {
         apiKey: apiKeyPreview,
         isPreview: true,
         channels: [ 'website'],
-        languages: ['en-us']
+        languages: ['en-us'],
+        baseUrl: "https://api-dev.aglty.io"
     });
     return syncClient;
 }

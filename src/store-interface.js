@@ -300,7 +300,7 @@ const expandContentItem = async ({ contentItem, languageCode, depth, expandAllCo
 					}
 				}
 
-				for (const listItem of list) {
+				for (const listItem of list.items) {
 					itemCount++
 					if (itemCount > 50) break;
 
