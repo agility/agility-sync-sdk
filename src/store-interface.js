@@ -364,7 +364,13 @@ const expandContentItem = async ({ contentItem, languageCode, depth, expandAllCo
  * @param {number} [requestParams.skip] - The number of items to skip from the list. Used for implementing pagination.
  * @returns {Promise<[] | Object>} - Returns a list of content items, or, if skip or take has been specified, an object with an items array and totalCount property.
 */
-const getContentList = async ({ referenceName, languageCode, depth = 0, expandAllContentLinks = false, skip = -1, take = -1 }) => {
+const getContentList = async ({ referenceName, languageCode, depth, contentLinkDepth, expandAllContentLinks = false, skip = -1, take = -1 }) => {
+
+	if (depth === undefined && contentLinkDepth !== undefined) {
+		depth = contentLinkDepth
+	} else if (depth === undefined && contentLinkDepth === undefined) {
+		depth = 0
+	}
 
 	let lst = await store.getItem({
 		options,
