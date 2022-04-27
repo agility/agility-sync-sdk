@@ -12,7 +12,7 @@ export default async function (languageCode, token) {
 	let itemCount = 0
 	let busy = false
 	let waitMS = 0
-	const waitMaxMS = 60000
+	const waitMaxMS = 10 * 60 * 1000
 	const waitIntervalMS = 1000
 
 	do {
