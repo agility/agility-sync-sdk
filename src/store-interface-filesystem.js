@@ -184,8 +184,11 @@ const waitOnLock = async (lockFile) => {
 
 //private function to get path of an item
 const getFilePath = ({ options, itemType, languageCode, itemID }) => {
-	const fileName = `${itemID}.json`;
-	return path.join(options.rootPath, languageCode, itemType, fileName);
+		if(typeof itemID === 'string' || itemID instanceof String){
+			itemID = itemID.replace(/[^a-zA-Z ]/g, "");
+		}
+		const fileName = `${itemID}.json`;
+		return path.join(options.rootPath, languageCode, itemType, fileName);
 }
 
 
