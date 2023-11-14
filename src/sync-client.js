@@ -7,16 +7,16 @@ import runSync from './methods/runSync'
 import storeInterface from './store-interface'
 import storeInterfaceFileSystem from './store-interface-filesystem'
 
-function getSyncClient (userConfig) {
+function getSyncClient(userConfig) {
     validateConfigParams(userConfig);
     return createSyncClient(userConfig);
 }
 
 function validateConfigParams(configParams) {
 
-    if(!configParams.guid || configParams.guid.length == 0) {
+    if (!configParams.guid || configParams.guid.length == 0) {
         throw new TypeError('You must provide an guid.');
-    } else if(!configParams.apiKey || configParams.apiKey.length == 0) {
+    } else if (!configParams.apiKey || configParams.apiKey.length == 0) {
         throw new TypeError('You must provide an access token.');
     } else {
         return;
@@ -31,6 +31,7 @@ const defaultConfig = {
     languages: [],
     channels: [],
     debug: false,
+    logLevel: 'warning',
     store: {
         interface: storeInterfaceFileSystem,
         options: {
@@ -45,6 +46,8 @@ function createSyncClient(userConfig) {
         ...userConfig
 
     }
+
+    process.env.AGILITY_LOG_LEVEL = config.logLevel;
 
     const agilityClient = agility.getApi({
         guid: config.guid,
