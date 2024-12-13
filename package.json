@@ -1,6 +1,6 @@
 {
   "name": "@agility/content-sync",
-  "version": "1.1.7",
+  "version": "1.1.8",
   "description": "JavaScript SDK for synchronizing content from Agility CMS",
   "main": "dist/agility-sync-sdk.node.js",
   "scripts": {
@@ -17,14 +17,16 @@
   "contributors": [
     "Joel Varty",
     "James Vidler",
-    "Joshua Isaac"
+    "Joshua Isaac",
+    "Kevin Tran",
+    "Aaron Taylor"
   ],
   "bugs": {
     "url": "https://github.com/agility/agility-sync-sdk/issues"
   },
   "homepage": "https://github.com/agility/agility-sync-sdk#readme",
   "dependencies": {
-    "@agility/content-fetch": "^1.0.0",
+    "@agility/content-fetch": "^2.0.8",
     "dotenv": "^8.2.0",
     "proper-lockfile": "^4.1.2"
   },
