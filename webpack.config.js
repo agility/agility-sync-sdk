@@ -23,6 +23,17 @@ const nodeConfig = {
             test: /\.js$/,
             exclude: /node_modules/,
             use: ['babel-loader'],
+        },
+        // JavaScript
+        {
+            test: /\.js$/,
+            exclude: /node_modules\/(?!@agility\/content-fetch)/, // Transpile @agility/content-fetch
+            use: {
+                loader: 'babel-loader',
+                options: {
+                    presets: ['@babel/preset-env'], // Ensure compatibility with modern syntax
+                }
+            }
         }
         ]
     },
