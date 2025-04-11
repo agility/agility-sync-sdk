@@ -23,6 +23,8 @@ const syncRunner = async function () {
 		if (lockRelease) {
 			lockRelease()
 		}
+		
+		return { success: true, message: `Sync completed.` }
 	}
 
 }
