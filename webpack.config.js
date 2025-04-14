@@ -1,32 +1,44 @@
 const path = require('path');
 
-
 const nodeConfig = {
     target: 'node',
-    entry: './src/sync-client.js',
+    entry: './src/sync-client.ts',
     output: {
         filename: 'agility-sync-sdk.node.js',
         path: path.resolve(__dirname, 'dist'),
-        library: 'agilitySync',
-        libraryTarget: 'umd',
-        libraryExport: 'default',
-        umdNamedDefine: true,
+        library: {
+            name: 'agilitySync',
+            type: 'umd',
+            export: 'default'
+        },
         globalObject: 'typeof self !== \'undefined\' ? self : this'
     },
     optimization: {
-        minimize: false
+        minimize: false,
+        moduleIds: 'deterministic'
+    },
+    resolve: {
+        extensions: ['.ts', '.js'],
+        alias: {
+            '@': path.resolve(__dirname, 'src')
+        }
     },
     module: {
-        rules : [
-        // JavaScript
-        {
-            test: /\.js$/,
-            exclude: /node_modules/,
-            use: ['babel-loader'],
-        }
+        rules: [
+            {
+                test: /\.(ts|js)$/,
+                exclude: /node_modules/,
+                use: [
+                    {
+                        loader: 'ts-loader',
+                        options: {
+                            transpileOnly: true
+                        }
+                    }
+                ]
+            }
         ]
     },
-    // Plugins
     plugins: []
 }
 

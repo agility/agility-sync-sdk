@@ -19,6 +19,8 @@ describe('store.getPage:', async function() {
             pageID: 2,
             languageCode: languageCode
         })
+
+        console.log(page)
         assert.strictEqual(page.pageID, 2, 'retrieved the page we asked for')
     })
 });
