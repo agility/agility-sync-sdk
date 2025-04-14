@@ -1,9 +1,5 @@
 import { logInfo, logWarning, sleep } from '../util';
-import { PageItem } from '../types/page-item.ts';
-import { SyncPagesResponse } from '../types/sync-pages-response.ts';
-import { AgilityClient } from '../types/agility-client.ts';
-import { StoreInterface } from '../types/store-interface.ts';
-import { SyncContext } from '../types/sync-context.ts';
+import { AgilityClient, StoreInterface, SyncContext, PageItem, SyncPagesResponse } from '../types/index';
 
 export default async function syncPages(
     this: SyncContext,
@@ -20,10 +16,6 @@ export default async function syncPages(
 
     do {
 
-        console.log('Syncing pages...');
-        console.log('Token:', token);
-        console.log('Language Code:', languageCode);
-
         //sync pages...
         const syncRet = await this.agilityClient.getSyncPages({
             syncToken: token,
@@ -31,7 +23,6 @@ export default async function syncPages(
             languageCode: languageCode
         });
 
-        console.log('Sync Pages Response:', syncRet);
 
         if (syncRet === undefined || syncRet === null || (syncRet.busy !== undefined && syncRet.busy === true)) {
             //if the api is being updated, wait a few ms and try again...

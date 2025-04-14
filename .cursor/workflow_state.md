@@ -1,124 +1,104 @@
-# Type Interface Cleanup Plan
+# Type Centralization Workflow
 
-## Overview
-This document tracks the progress of cleaning up type interfaces across the codebase. The goal is to remove duplicate interface definitions and ensure proper imports from the `types/` directory.
+## Goal
+Centralize all TypeScript types into a single index file for easier imports and better maintainability.
 
-## Files to Update
+## Plan
 
-### Store Interface Files
-- [x] `src/store-interface.ts` - Remove duplicate `StoreInterface` and `ContentItem` definitions
-- [x] `src/store-interface-console.ts` - Update type imports
-- [x] `src/store-interface-filesystem.ts` - Update type imports
+1. **Create Type Index File**
+   - [x] Create `src/types/index.ts`
+   - [x] Export all types from individual files
+   - [x] Verify exports
 
-### Method Files
-- [x] `src/methods/syncModels.ts` - Remove duplicate interfaces:
-  - `ContentDefinition`
-  - `ContentDefinitionList`
-  - `StoreInterface`
-  - `SyncContext`
-- [x] `src/methods/syncAssets.ts` - Remove duplicate interfaces:
-  - `MediaAsset`
-  - `MediaFolder`
-  - `MediaList`
-  - `MediaFolderList`
-  - `AgilityClient`
-  - `StoreInterface`
-  - `SyncContext`
-- [x] `src/methods/runSync.ts` - Remove duplicate interfaces:
-  - `ClientConfig`
-  - `SyncState`
-  - `ClientObject`
-- [x] `src/methods/syncGalleries.ts` - Remove duplicate interfaces:
-  - `MediaGalleryItem`
-  - `MediaGalleryList`
-  - `StoreInterface`
-  - `SyncContext`
-- [x] `src/methods/syncContainers.ts` - Remove duplicate interfaces:
-  - `ContainerList`
-  - `AgilityClient`
-  - `StoreInterface`
-  - `SyncContext`
-- [x] `src/methods/syncContent.ts` - Remove duplicate interfaces:
-  - `StoreInterface`
-  - `SyncContext`
-- [x] `src/methods/syncPages.ts` - Remove duplicate interfaces:
-  - `StoreInterface`
+2. **Files to Update**
+   - [x] src/methods/syncContent.ts
+     - [x] Replace individual type imports with single import from types/index
+     - [x] Update import paths to remove .ts extensions
+     - [x] Verify no type errors
+   - [x] src/methods/runSync.ts
+     - [x] Replace individual type imports with single import from types/index
+     - [x] Update import paths to remove .ts extensions
+     - [x] Verify no type errors
+   - [x] src/methods/syncPages.ts
+     - [x] Replace individual type imports with single import from types/index
+     - [x] Update import paths to remove .ts extensions
+     - [x] Verify no type errors
+   - [ ] src/store-interface-console.ts
+     - [ ] Replace individual type imports with single import from types/index
+     - [ ] Update import paths to remove .ts extensions
+     - [ ] Verify no type errors
+   - [ ] src/store-interface-filesystem.ts
+     - [ ] Replace individual type imports with single import from types/index
+     - [ ] Update import paths to remove .ts extensions
+     - [ ] Verify no type errors
+   - [ ] src/sync-client.ts
+     - [ ] Replace individual type imports with single import from types/index
+     - [ ] Update import paths to remove .ts extensions
+     - [ ] Verify no type errors
 
-### Type Files
-These files contain the canonical type definitions and should be kept:
-- [x] `src/types/content-definition.ts`
-- [x] `src/types/container.ts`
-- [x] `src/types/content-item.ts`
-- [x] `src/types/store-interface.ts`
-- [x] `src/types/save-item-params.ts`
-- [x] `src/types/delete-item-params.ts`
-- [x] `src/types/get-item-params.ts`
-- [x] `src/types/media-asset.ts`
-- [x] `src/types/merge-item-to-list-params.ts`
-- [x] `src/types/sync-content-response.ts`
-- [x] `src/types/sync-context.ts`
-- [x] `src/types/container-list.ts`
-- [x] `src/types/get-file-path-params.ts`
-- [x] `src/types/media-gallery-list.ts`
-- [x] `src/types/sync-pages-response.ts`
-- [x] `src/types/store.ts`
-- [x] `src/types/media-gallery.ts`
-- [x] `src/types/media-folder.ts`
-- [x] `src/types/media-gallery-item.ts`
-- [x] `src/types/client-config.ts`
-- [x] `src/types/sync-state.ts`
-- [x] `src/types/client-object.ts`
-- [x] `src/types/agility-client.ts`
+3. **Type Files to Consolidate**
+   - [x] src/types/store-options.ts
+   - [x] src/types/save-item-params.ts
+   - [x] src/types/delete-item-params.ts
+   - [x] src/types/merge-item-to-list-params.ts
+   - [x] src/types/get-item-params.ts
+   - [x] src/types/clear-items-params.ts
+   - [x] src/types/get-file-path-params.ts
+   - [x] src/types/store-interface.ts
+   - [x] src/types/extended-store-interface.ts
+   - [x] src/types/sync-state.ts
+   - [x] src/types/content-item.ts
+   - [x] src/types/page-item.ts
+   - [x] src/types/sitemap.ts
+   - [x] src/types/content-list-result.ts
+   - [x] src/types/agility-client.ts
+   - [x] src/types/sync-context.ts
+   - [x] src/types/sync-content-response.ts
+   - [x] src/types/sync-pages-response.ts
+   - [x] src/types/client-config.ts
+   - [x] src/types/client-object.ts
+   - [x] src/types/store.ts
 
-## Progress Tracking
-- [x] Phase 1: Remove duplicate interfaces from store interface files
-  - [x] `src/store-interface.ts` - Completed
-  - [x] `src/store-interface-console.ts` - Completed
-  - [x] `src/store-interface-filesystem.ts` - Completed
-- [x] Phase 2: Remove duplicate interfaces from method files
-  - [x] `src/methods/syncModels.ts` - Completed
-  - [x] `src/methods/syncAssets.ts` - Completed
-  - [x] `src/methods/runSync.ts` - Completed
-  - [x] `src/methods/syncGalleries.ts` - Completed
-  - [x] `src/methods/syncContainers.ts` - Completed
-  - [x] `src/methods/syncContent.ts` - Completed
-  - [x] `src/methods/syncPages.ts` - Completed
-- [x] Phase 3: Update imports in all files
-  - [x] `src/methods/syncModels.ts` - Completed
-  - [x] `src/methods/syncAssets.ts` - Completed
-  - [x] `src/methods/runSync.ts` - Completed
-  - [x] `src/methods/syncGalleries.ts` - Completed
-  - [x] `src/methods/syncContainers.ts` - Completed
-  - [x] `src/methods/syncContent.ts` - Completed
-  - [x] `src/methods/syncPages.ts` - Completed
-- [x] Phase 4: Verify all type imports are correct
-- [x] Phase 5: Run type checking to ensure no regressions
+## Progress
 
-## Test Implementation Plan
-- [x] Phase 6: Set up test environment
-  - [x] Install testing dependencies (Vitest)
-  - [x] Configure test environment
-  - [x] Create test utilities and mocks
-- [ ] Phase 7: Implement test suites
-  - [x] Store Interface Tests
-    - [x] `store-interface-filesystem.ts` - Basic tests implemented
-    - [x] `store-interface-console.ts` - Basic tests implemented
-  - [ ] Sync Method Tests
-    - [x] `syncModels.ts` - Basic tests implemented
-    - [ ] `syncAssets.ts`
-    - [ ] `syncContainers.ts`
-    - [ ] `syncContent.ts`
-    - [ ] `syncPages.ts`
-    - [ ] `syncGalleries.ts`
-    - [ ] `runSync.ts`
-  - [ ] Integration Tests
-    - [ ] End-to-end sync scenarios
-    - [ ] Error handling
-    - [ ] Edge cases
+### Phase 1: Create Type Index
+- [x] Create index.ts
+- [x] Export all types
+- [x] Verify exports
+
+### Phase 2: Update Imports
+- [x] Update method files
+  - [x] syncContent.ts
+  - [x] runSync.ts
+  - [x] syncPages.ts
+- [ ] Update store interface files
+  - [ ] store-interface-console.ts
+  - [ ] store-interface-filesystem.ts
+- [ ] Update client files
+  - [ ] sync-client.ts
+
+### Phase 3: Testing
+- [ ] Run type checks
+  - [ ] After each file update
+  - [ ] After all files updated
+- [ ] Run tests
+  - [ ] After each file update
+  - [ ] After all files updated
+- [ ] Verify no regressions
+  - [ ] Check all functionality
+  - [ ] Verify type safety
 
 ## Notes
-- All type definitions should be imported from the `types/` directory
-- No duplicate interface definitions should remain in implementation files
-- Ensure all imports use proper file extensions (.ts)
-- Maintain backward compatibility with existing code
-- Some interfaces may need to be moved to the `types/` directory if they don't already exist there
+- Keep original type files for now
+- Update imports gradually
+- Test after each major change
+- Consider removing original type files after successful migration
+- Order of updates:
+  1. Core sync methods (syncContent, runSync, syncPages)
+  2. Store interfaces (console, filesystem)
+  3. Client implementation
+- Testing strategy:
+  1. Run type check after each file update
+  2. Run tests for updated file
+  3. Run full test suite after all updates
+  4. Verify no regressions in functionality

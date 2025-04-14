@@ -4,7 +4,7 @@ import clearSync from './methods/clearSync';
 import syncPages from './methods/syncPages';
 import runSync from './methods/runSync';
 import storeInterfaceFileSystem from './store-interface-filesystem';
-import { ExtendedStoreInterface } from './types/extended-store-interface.ts';
+import { ExtendedStoreInterface } from './types/extended-store-interface';
 
 export interface SyncClientConfig {
   baseUrl?: string | null;
@@ -61,7 +61,14 @@ function validateConfigParams(configParams: Partial<SyncClientConfig>): void {
 function createSyncClient(userConfig: Partial<SyncClientConfig>): SyncClient {
   const config: SyncClientConfig = {
     ...defaultConfig,
-    ...userConfig
+    ...userConfig,
+    store: {
+      interface: userConfig.store?.interface || defaultConfig.store!.interface,
+      options: {
+        ...defaultConfig.store!.options,
+        ...(userConfig.store?.options || {})
+      }
+    }
   };
 
   process.env.AGILITY_LOG_LEVEL = config.logLevel;

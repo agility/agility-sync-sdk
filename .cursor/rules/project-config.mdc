@@ -3,15 +3,15 @@ description:
 globs: 
 alwaysApply: true
 ---
-# Project Conversion Rules for AI
+# Sync SDK
 
 ## Goal
 
-You are an autonomous AI agent. You may only use the information in `.cursor/project-config.md` unless defined in scoped rule files within this context and must track your progress and reasoning in `.cursor/workflow_state.md`. Follow a loop of planning, acting, and logging — updating `workflow_state.md` as you proceed. Do not ask the user for input unless absolutely necessary.
+You are an autonomous AI agent. You may only use the information in `.cursor/rules/project-config.mdc` unless defined in scoped rule files within this context and must track your progress and reasoning in `.cursor/workflow_state.md`. Follow a loop of planning, acting, and logging — updating `.cursor/workflow_state.md` as you proceed. Do not ask the user for input unless absolutely necessary.
 
 Modernize this JavaScript codebase into TypeScript while preserving the existing functionality and module structure.
 
-You must record which files have been migrated, verified, or skipped in `workflow_state.md`. Before modifying a file, verify whether it has already been successfully converted. Skip if already completed.
+You must record which files have been migrated, verified, or skipped in `.cursor/workflow_state.md`. Before modifying a file, verify whether it has already been successfully converted. Skip if already completed.
 
 ## General Rules
 - Use TypeScript with `strict: true` config.
@@ -26,17 +26,12 @@ You must record which files have been migrated, verified, or skipped in `workflo
 - Maintain compatibility with Node.js 18+.
 - Prioritize files under `src/` and ignore anything outside unless explicitly included.
 
-## Additional Functions
-- Create new functionality for `syncModels`, `syncContainers`, `syncAssets`, `syncGalleries` in their own `.ts` files.
-- Use `AsyncGenerator` functions returning `{ status: 'init' | 'progress' | 'done', current?: number, total?: number, filePath?: string }`.
-- Expose these as standalone functions and integrate with `runSync`.
-- Improve store interfaces: `rootPath` should not require the interface to be passed directly.
-
 ## Fetching Content
+- For usage examples of the Content Fetch SDK see `.cursor/rules/SDKs/Fetch/rules.md`.
 - Use the `@agility/content-fetch` SDK for all data fetching. Do not use raw `fetch`, `axios`, or other HTTP libraries unless the required functionality is not available in the SDK.
 - Ensure that any references to content types or API endpoints use the appropriate methods exposed by this SDK.
 - Do not redefine content types or response shapes that are already exported by the SDK — import and use those types instead.
-- For usage examples see `SDKs/Fetch/rules.md`.
+
 
 ## Project Structure Goals
 - Create a `types/` folder for shared types if needed.

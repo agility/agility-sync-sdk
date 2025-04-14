@@ -1,25 +1,5 @@
 import { vi } from 'vitest';
 
-// Mock the @agility/content-fetch module
-vi.mock('@agility/content-fetch', () => ({
-    default: {
-        getApi: vi.fn().mockReturnValue({
-            management: {
-                getContentDefinition: vi.fn(),
-                getContentDefinitionList: vi.fn(),
-                getMediaList: vi.fn(),
-                getMediaFolderList: vi.fn(),
-                getMediaGalleryList: vi.fn(),
-                getMediaGallery: vi.fn(),
-                getContainer: vi.fn(),
-                getContainerList: vi.fn(),
-            },
-            getSyncContent: vi.fn(),
-            getSyncPages: vi.fn(),
-        }),
-    },
-}));
-
 // Mock the fs module
 vi.mock('fs', () => ({
     default: {

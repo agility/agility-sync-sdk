@@ -1,9 +1,5 @@
 import { logInfo, logWarning, sleep } from '../util';
-import { ContentItem } from '../types/content-item.ts';
-import { SyncContentResponse } from '../types/sync-content-response.ts';
-import { AgilityClient } from '../types/agility-client.ts';
-import { StoreInterface } from '../types/store-interface.ts';
-import { SyncContext } from '../types/sync-context.ts';
+import { ContentItem, SyncContentResponse, AgilityClient, StoreInterface, SyncContext } from '../types/index';
 
 /**
  * Sync the content items in the specified Agility Instance.
@@ -21,24 +17,10 @@ export default async function syncContent(
     const waitMaxMS = 10 * 60 * 1000;
     const waitIntervalMS = 1000;
 
-    console.log('=== Starting Content Sync ===');
-    console.log('Initial Token:', token);
-    console.log('Language Code:', languageCode);
-    console.log('Store Interface:', storeInterface.constructor.name);
-
     do {
-        console.log('\n=== Sync Iteration ===');
-        console.log('Current Token:', token);
-        console.log('Total Items Processed:', itemCount);
-        console.log('Wait Time (ms):', waitMS);
 
         try {
             //sync content items...
-            console.log('Calling getSyncContent with params:', {
-                syncToken: token,
-                pageSize: 100,
-                languageCode: languageCode,
-            });
 
             const syncRet = await this.agilityClient.getSyncContent({
                 syncToken: token,
@@ -46,15 +28,14 @@ export default async function syncContent(
                 languageCode: languageCode,
             });
 
-            console.log('Raw Sync Response:', JSON.stringify(syncRet, null, 2));
-
             if (syncRet === undefined || syncRet === null) {
                 console.error('Sync response is undefined or null');
                 logWarning("Sync API returned undefined/null response");
                 break;
             }
 
-            if (syncRet.busy !== undefined && syncRet.busy === true) {
+            // Check if the server is busy
+            if (syncRet.busy === true) {
                 //if the api is being updated, wait a few ms and try again...
                 waitMS += waitIntervalMS;
                 if (waitMS > waitMaxMS) {
@@ -83,33 +64,33 @@ export default async function syncContent(
             }
 
             const syncItems = syncRet.items || [];
-            console.log('Items in response:', syncItems.length);
+            // console.log('Items in response:', syncItems.length);
 
             //if we don't get anything back, kick out
-            if (syncItems.length > 0) {
-                console.log('Processing', syncItems.length, 'items');
-                for (let index = 0; index < syncItems.length; index++) {
-                    const item = syncItems[index];
-                    console.log(`Saving item ${index + 1}/${syncItems.length}:`, {
-                        contentID: item.contentID,
-                        properties: Object.keys(item.properties || {}),
-                    });
-                    await storeInterface.saveContentItem({ contentItem: item, languageCode });
-                }
-            } else {
+            if (syncItems.length === 0) {
                 console.log('No items to process in this batch');
-            }
-
-            if (syncRet.syncToken > token) {
-                console.log('Updating token from', token, 'to', syncRet.syncToken);
-                token = syncRet.syncToken;
-            } else {
-                console.log('No new token received, breaking sync loop');
                 break;
             }
 
-            itemCount += syncItems.length;
-            console.log('Updated total items processed:', itemCount);
+            // console.log('Processing', syncItems.length, 'items');
+            for (let index = 0; index < syncItems.length; index++) {
+                const item = syncItems[index];
+                console.log(`Saving item ${index + 1}/${syncItems.length}:`, {
+                    contentID: item.contentID,
+                    properties: Object.keys(item.properties || {}),
+                });
+                await storeInterface.saveContentItem({ contentItem: item, languageCode });
+                itemCount++;
+            }
+
+            // Update the token for the next iteration
+            if (syncRet.syncToken !== undefined && syncRet.syncToken !== null && syncRet.syncToken > token) {
+                token = syncRet.syncToken;
+                console.log('Updated sync token:', token);
+            } else {
+                console.log('No sync token returned or token not increased, sync complete');
+                break;
+            }
 
         } catch (error: unknown) {
             console.error('Error during sync iteration:', error);
@@ -119,10 +100,6 @@ export default async function syncContent(
 
     } while (token > 0 || busy === true);
 
-    console.log('\n=== Sync Summary ===');
-    console.log('Final Token:', token);
-    console.log('Total Items Processed:', itemCount);
-    console.log('Total Wait Time (ms):', waitMS);
 
     if (itemCount > 0) {
         logInfo(`Content Sync returned ${itemCount} item(s).`);

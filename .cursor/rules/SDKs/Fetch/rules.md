@@ -1,6 +1,10 @@
-##Fetch SDK Functions
+## Fetch SDK Functions
 
 The following are a collection of SDK functions used with `@agility/content-fetch`
+
+For examples of responses see `.cursor/rules/SDKs/Fetch/responses/rules.md`
+For examples of types see `.cursor/rules/SDKs/Fetch/types/rules.md`
+
 
 ### Example request
 

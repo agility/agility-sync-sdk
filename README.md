@@ -1,7 +1,78 @@
-# Agility CMS Sync SDK
-The Agility CMS Sync SDK provides an interface to sync, store and access content locally.
+# Agility Sync SDK
 
-By keeping a local cache of your content, your web app can access content faster.
+The Agility Sync SDK is a JavaScript library for synchronizing content from Agility CMS. It provides a simple interface for fetching and managing content from Agility CMS in your applications.
+
+## Installation
+
+```bash
+npm install @agility/content-sync
+```
+
+## Usage
+
+```typescript
+import { AgilitySyncSDK } from '@agility/content-sync';
+
+const syncSDK = new AgilitySyncSDK({
+  guid: 'your-guid',
+  apiKey: 'your-api-key',
+  isPreview: false,
+  debug: false
+});
+
+// Run sync
+await syncSDK.runSync();
+```
+
+## Building from Source
+
+1. Clone the repository:
+```bash
+git clone https://github.com/agility/agility-sync-sdk.git
+cd agility-sync-sdk
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Build the SDK:
+```bash
+npm run build
+```
+
+This will:
+- Clean the dist directory
+- Generate TypeScript declarations
+- Bundle the SDK using webpack
+
+## Development
+
+### Running Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run tests with UI
+npm run test:ui
+
+# Run tests with coverage
+npm run test:coverage
+```
+
+### Generating Documentation
+
+```bash
+npm run docs
+```
+
+This will generate documentation in the `docs/` directory using JSDoc.
+
+## License
+
+MIT
 
 ## Benefits
 - Access your content quickly, and locally in your web or mobile app

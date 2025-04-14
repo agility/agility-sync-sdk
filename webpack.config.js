@@ -1,45 +1,31 @@
 const path = require('path');
 
-const nodeConfig = {
-    target: 'node',
-    entry: './src/sync-client.ts',
+module.exports = {
+    mode: 'production',
+    entry: './src/index.ts',
     output: {
-        filename: 'agility-sync-sdk.node.js',
         path: path.resolve(__dirname, 'dist'),
+        filename: 'agility-sync-sdk.js',
         library: {
-            name: 'agilitySync',
+            name: 'AgilitySyncSDK',
             type: 'umd',
             export: 'default'
         },
-        globalObject: 'typeof self !== \'undefined\' ? self : this'
-    },
-    optimization: {
-        minimize: false,
-        moduleIds: 'deterministic'
-    },
-    resolve: {
-        extensions: ['.ts', '.js'],
-        alias: {
-            '@': path.resolve(__dirname, 'src')
-        }
+        globalObject: 'this'
     },
     module: {
         rules: [
             {
-                test: /\.(ts|js)$/,
-                exclude: /node_modules/,
-                use: [
-                    {
-                        loader: 'ts-loader',
-                        options: {
-                            transpileOnly: true
-                        }
-                    }
-                ]
+                test: /\.tsx?$/,
+                use: 'ts-loader',
+                exclude: /node_modules/
             }
         ]
     },
-    plugins: []
-}
-
-module.exports = nodeConfig
+    resolve: {
+        extensions: ['.tsx', '.ts', '.js']
+    },
+    externals: {
+        '@agility/content-fetch': '@agility/content-fetch'
+    }
+};

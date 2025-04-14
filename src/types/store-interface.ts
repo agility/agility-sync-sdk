@@ -1,5 +1,6 @@
 import { SyncState } from './sync-state';
 import { StoreOptions } from './store-options';
+import { ContentListResult } from './content-list-result';
 
 /**
  * Interface defining the core functionality required for a store implementation.
@@ -110,7 +111,7 @@ export interface StoreInterface {
         expandAllContentLinks?: boolean;
         skip?: number;
         take?: number;
-    }) => Promise<any[]>;
+    }) => Promise<ContentListResult | any[]>;
 
     /**
      * Retrieves a page from the store

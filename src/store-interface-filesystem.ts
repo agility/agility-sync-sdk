@@ -5,20 +5,20 @@ import { sleep } from "./util";
 import { lockSync, unlockSync, checkSync, check } from "proper-lockfile";
 import dotenv from "dotenv";
 
-import { StoreOptions } from "./types/store-options.ts";
-import { SaveItemParams } from "./types/save-item-params.ts";
-import { DeleteItemParams } from "./types/delete-item-params.ts";
-import { MergeItemToListParams } from "./types/merge-item-to-list-params.ts";
-import { GetItemParams } from "./types/get-item-params.ts";
-import { ClearItemsParams } from "./types/clear-items-params.ts";
-import { GetFilePathParams } from "./types/get-file-path-params.ts";
-import { StoreInterface } from "./types/store-interface.ts";
-import { ExtendedStoreInterface } from "./types/extended-store-interface.ts";
-import { SyncState } from "./types/sync-state.ts";
-import { ContentItem } from "./types/content-item.ts";
-import { PageItem } from "./types/page-item.ts";
-import { Sitemap } from "./types/sitemap.ts";
-import { ContentListResult } from "./types/content-list-result.ts";
+import { StoreOptions } from "./types/store-options";
+import { SaveItemParams } from "./types/save-item-params";
+import { DeleteItemParams } from "./types/delete-item-params";
+import { MergeItemToListParams } from "./types/merge-item-to-list-params";
+import { GetItemParams } from "./types/get-item-params";
+import { ClearItemsParams } from "./types/clear-items-params";
+import { GetFilePathParams } from "./types/get-file-path-params";
+import { StoreInterface } from "./types/store-interface";
+import { ExtendedStoreInterface } from "./types/extended-store-interface";
+import { SyncState } from "./types/sync-state";
+import { ContentItem } from "./types/content-item";
+import { PageItem } from "./types/page-item";
+import { Sitemap } from "./types/sitemap";
+import { ContentListResult } from "./types/content-list-result";
 
 dotenv.config({
 	path: `.env.${process.env.NODE_ENV}`,
@@ -43,14 +43,26 @@ const setOptions = (opts: StoreOptions): void => {
  */
 const saveItem = async ({ options, item, itemType, languageCode, itemID }: SaveItemParams): Promise<void> => {
 	console.log(`File System Interface: saveItem has been called`);
+	if (!options) throw new Error('Store options not initialized');
 	const filePath = getFilePath({ options, itemType, languageCode, itemID });
 	const dirPath = path.dirname(filePath);
+
+	// Create all necessary directories
+	const rootDir = path.join(options.rootPath, languageCode);
+	if (!fs.existsSync(rootDir)) {
+		fs.mkdirSync(rootDir, { recursive: true });
+	}
+
+	const typeDir = path.join(rootDir, itemType);
+	if (!fs.existsSync(typeDir)) {
+		fs.mkdirSync(typeDir, { recursive: true });
+	}
 
 	if (!fs.existsSync(dirPath)) {
 		fs.mkdirSync(dirPath, { recursive: true });
 	}
 
-	const json = JSON.stringify(item);
+	const json = options.pretty ? JSON.stringify(item, null, 2) : JSON.stringify(item);
 	fs.writeFileSync(filePath, json);
 };
 
@@ -159,6 +171,8 @@ const clearItems = async (): Promise<void> => {
 	if (fs.existsSync(rootPath)) {
 		fs.rmSync(rootPath, { recursive: true, force: true });
 	}
+	// Recreate the root directory
+	fs.mkdirSync(rootPath, { recursive: true });
 };
 
 /**
@@ -298,7 +312,7 @@ const getContentItem = async (params: { contentID: number; languageCode: string;
 	return item;
 };
 
-const getContentList = async (params: { referenceName: string; languageCode: string; depth?: number; contentLinkDepth?: number; expandAllContentLinks?: boolean; skip?: number; take?: number }): Promise<any[]> => {
+const getContentList = async (params: { referenceName: string; languageCode: string; depth?: number; contentLinkDepth?: number; expandAllContentLinks?: boolean; skip?: number; take?: number }): Promise<ContentListResult | any[]> => {
 	if (!options) throw new Error('Store options not initialized');
 	const list = await getItem({ 
 		options, 
@@ -306,10 +320,29 @@ const getContentList = async (params: { referenceName: string; languageCode: str
 		languageCode: params.languageCode, 
 		itemID: params.referenceName 
 	});
-	if (!list) {
-		return [];
+
+	if (!list || !Array.isArray(list)) {
+		return {
+			items: [],
+			totalCount: 0
+		};
 	}
-	return list;
+
+	const totalCount = list.length;
+	let items = [...list];
+
+	if (params.skip && params.skip > 0) {
+		items = items.slice(params.skip);
+	}
+
+	if (params.take && params.take > 0) {
+		items = items.slice(0, params.take);
+	}
+
+	return {
+		items,
+		totalCount
+	};
 };
 
 const getUrlRedirections = async (params: { languageCode: string }): Promise<any> => {
@@ -322,10 +355,14 @@ const getUrlRedirections = async (params: { languageCode: string }): Promise<any
 	});
 	if (!redirections) {
 		return {
-			items: []
+			items: [],
+			isUpToDate: true
 		};
 	}
-	return redirections;
+	return {
+		...redirections,
+		isUpToDate: redirections.isUpToDate ?? true
+	};
 };
 
 const getSyncState = async (languageCode: string): Promise<SyncState | null> => {
@@ -346,12 +383,12 @@ const saveSitemap = async (params: { sitemap: any; languageCode: string; channel
 
 const saveSitemapNested = async (params: { sitemapNested: any; languageCode: string; channelName: string }): Promise<void> => {
 	if (!options) throw new Error('Store options not initialized');
-	await saveItem({ 
-		options, 
-		item: params.sitemapNested, 
-		itemType: 'nestedsitemap', 
-		languageCode: params.languageCode, 
-		itemID: params.channelName 
+	await saveItem({
+		options,
+		item: params.sitemapNested,
+		itemType: 'nestedsitemap',
+		languageCode: params.languageCode,
+		itemID: params.channelName
 	});
 };
 
@@ -378,10 +415,25 @@ const saveSyncState = async (params: { syncState: SyncState; languageCode: strin
 };
 
 const storeInterface: ExtendedStoreInterface = {
-	clearItems,
-	deleteItem,
-	getItem,
-	saveItem,
+	clearItems: async () => {
+		if (!options) throw new Error('Store options not initialized');
+		await clearItems();
+	},
+	deleteItem: async (key: string) => {
+		if (!options) throw new Error('Store options not initialized');
+		const [itemType, languageCode, itemID] = key.split(':');
+		await deleteItem({ options, itemType, languageCode, itemID });
+	},
+	getItem: async (key: string) => {
+		if (!options) throw new Error('Store options not initialized');
+		const [itemType, languageCode, itemID] = key.split(':');
+		return getItem({ options, itemType, languageCode, itemID });
+	},
+	saveItem: async (key: string, value: any) => {
+		if (!options) throw new Error('Store options not initialized');
+		const [itemType, languageCode, itemID] = key.split(':');
+		await saveItem({ options, item: value, itemType, languageCode, itemID });
+	},
 	mergeItemToList,
 	getContentItem,
 	getContentList,
