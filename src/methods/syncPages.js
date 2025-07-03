@@ -1,7 +1,7 @@
 import { logInfo, logWarning, sleep } from '../util'
 
-export default async function (languageCode, token) {
-	const storeInterface = this.store;
+export default async function (languageCode, token, storeInterface, agilityClient) {
+
 	if (!token) token = 0;
 
 	let itemCount = 0;
@@ -14,7 +14,7 @@ export default async function (languageCode, token) {
 
 	do {
 		//sync pages...
-		const syncRet = await this.agilityClient.getSyncPages({
+		const syncRet = await agilityClient.getSyncPages({
 			syncToken: token,
 			pageSize: 100,
 			languageCode: languageCode

@@ -10,15 +10,17 @@ import { createSyncClient, createPreviewSyncClient } from './_syncClients.config
 
 const languageCode = 'en-us'
 
-describe('store.getContentItem:', async function() {
+describe('store.getContentItem:', async function () {
 
-    it('should be able to retrieve an item from the store', async function() {
+    it('should be able to retrieve an item from the store', async function () {
         var syncClient = createSyncClient();
+
         const contentItem = await syncClient.store.getContentItem({
-            contentID: 21,
+            contentID: 22,
             languageCode: languageCode,
         })
-        assert.strictEqual(contentItem.contentID, 21, 'retrieved the content item we asked for')
+
+        assert.strictEqual(contentItem.contentID, 22, 'retrieved the content item we asked for')
     })
 
 });
