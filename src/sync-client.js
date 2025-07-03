@@ -24,6 +24,7 @@ function validateConfigParams(configParams) {
 }
 
 const defaultConfig = {
+    region: null,
     baseUrl: null,
     isPreview: false,
     guid: null,
@@ -54,7 +55,8 @@ function createSyncClient(userConfig) {
         apiKey: config.apiKey,
         isPreview: config.isPreview,
         debug: config.debug,
-        baseUrl: config.baseUrl
+        baseUrl: config.baseUrl,
+        region: config.region
     });
 
 
