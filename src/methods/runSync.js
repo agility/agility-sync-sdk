@@ -1,9 +1,8 @@
 import { logInfo, logSuccess } from '../util'
 
 
-const syncRunner = async function () {
+const syncRunner = async function (config, agilityClient, storeInterface, syncContent, syncPages) {
 
-	const storeInterface = this.store.getStore();
 
 	//if a mutex has been defined, call the wait lock
 	let lockRelease = null
@@ -17,7 +16,7 @@ const syncRunner = async function () {
 
 
 		//actually do the sync
-		await sync(this)
+		await sync(config, agilityClient, storeInterface, syncContent, syncPages)
 
 	} finally {
 		if (lockRelease) {
@@ -28,13 +27,12 @@ const syncRunner = async function () {
 }
 
 
-const sync = async (clientObj) => {
+const sync = async (config, agilityClient, storeInterface, syncContent, syncPages) => {
 
-	const languageCodes = clientObj.config.languages;
-	const channels = clientObj.config.channels;
-	const storeInterface = clientObj.store;
+	const languageCodes = config.languages;
+	const channels = config.channels;
 
-	const modeStr = clientObj.config.isPreview ? "preview" : "live"
+	const modeStr = config.isPreview ? "preview" : "live"
 
 	for (const languageCode of languageCodes) {
 
@@ -51,8 +49,8 @@ const sync = async (clientObj) => {
 		}
 
 		logSuccess(`Starting Sync for ${languageCode} - ${modeStr} mode.`);
-		const newItemToken = await clientObj.syncContent(languageCode, syncState.itemToken);
-		const newPageToken = await clientObj.syncPages(languageCode, syncState.pageToken);
+		const newItemToken = await syncContent(languageCode, syncState.itemToken);
+		const newPageToken = await syncPages(languageCode, syncState.pageToken);
 
 		if (newItemToken != syncState.itemToken
 			|| newPageToken != syncState.pageToken) {
@@ -61,10 +59,10 @@ const sync = async (clientObj) => {
 			for (const channelName of channels) {
 				logInfo(`Updating Sitemap channel ${channelName} in ${languageCode}`);
 
-				const sitemap = await clientObj.agilityClient.getSitemapFlat({ channelName, languageCode });
+				const sitemap = await agilityClient.getSitemapFlat({ channelName, languageCode });
 				storeInterface.saveSitemap({ sitemap, languageCode, channelName });
 
-				const sitemapNested = await clientObj.agilityClient.getSitemapNested({ channelName, languageCode });
+				const sitemapNested = await agilityClient.getSitemapNested({ channelName, languageCode });
 				storeInterface.saveSitemapNested({ sitemapNested, languageCode, channelName });
 
 			}
@@ -75,7 +73,7 @@ const sync = async (clientObj) => {
 		let lastAccessDate = null;
 		if (urlRedirections) lastAccessDate = urlRedirections.lastAccessDate;
 
-		urlRedirections = await clientObj.agilityClient.getUrlRedirections({ lastAccessDate });
+		urlRedirections = await agilityClient.getUrlRedirections({ lastAccessDate });
 		if (urlRedirections && urlRedirections.isUpToDate === false) {
 			logInfo(`URL Redirections Updated and Saved`);
 			await storeInterface.saveUrlRedirections({ urlRedirections, languageCode });

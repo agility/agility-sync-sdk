@@ -4,8 +4,8 @@ import { logInfo, logWarning, sleep } from '../util'
 /**
  * Sync the content items in the specified Agility Instance.
  */
-export default async function (languageCode, token) {
-    const storeInterface = this.store;
+export default async function (languageCode, token, storeInterface, agilityClient) {
+
 
 	if (!token) token = 0;
 
@@ -19,7 +19,7 @@ export default async function (languageCode, token) {
 
 
 		//sync content items...
-		const syncRet = await this.agilityClient.getSyncContent({
+		const syncRet = await agilityClient.getSyncContent({
 			syncToken: token,
 			pageSize: 100,
 			languageCode: languageCode,
@@ -35,7 +35,7 @@ export default async function (languageCode, token) {
 				break
 			}
 
-			if (! busy) {
+			if (!busy) {
 				//first time we're busy...
 				busy = true
 				logInfo("Sync API is busy.  Waiting...")
@@ -54,7 +54,7 @@ export default async function (languageCode, token) {
 		const syncItems = syncRet.items;
 
 		//if we don't get anything back, kick out
-		if (syncItems.length > 0 ) {
+		if (syncItems.length > 0) {
 
 			for (let index = 0; index < syncItems.length; index++) {
 				await storeInterface.saveContentItem({ contentItem: syncItems[index], languageCode });
