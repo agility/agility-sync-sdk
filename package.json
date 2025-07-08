@@ -1,6 +1,6 @@
 {
   "name": "@agility/content-sync",
-  "version": "1.1.9",
+  "version": "1.2.0-beta",
   "description": "JavaScript SDK for synchronizing content from Agility CMS",
   "main": "dist/agility-sync-sdk.node.js",
   "scripts": {
