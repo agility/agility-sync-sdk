@@ -1,5 +1,5 @@
 //import agilitySync from '../dist/agility-sync-sdk.node'
-import agilitySync from '../src/sync-client'
+import * as agilitySync from '../src/sync-client'
 
 import storeInterfaceConsole from '../src/store-interface-console'
 
