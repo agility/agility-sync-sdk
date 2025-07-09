@@ -1,11 +1,11 @@
-const fs = require('fs')
-const os = require('os')
-const path = require('path')
-const {sleep} = require("./util")
-const { lockSync, unlockSync, checkSync, check }  = require("proper-lockfile")
+import fs from 'fs'
+import os from 'os'
+import path from 'path'
+import { sleep } from "./util.js"
+import { lockSync, unlockSync, checkSync, check } from "proper-lockfile"
+import dotenv from "dotenv"
 
-
-require("dotenv").config({
+dotenv.config({
 	path: `.env.${process.env.NODE_ENV}`,
 })
 
@@ -192,7 +192,7 @@ const getFilePath = ({ options, itemType, languageCode, itemID }) => {
 }
 
 
-module.exports = {
+export default {
 	saveItem,
 	deleteItem,
 	mergeItemToList,
