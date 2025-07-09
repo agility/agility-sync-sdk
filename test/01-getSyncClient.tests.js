@@ -1,7 +1,7 @@
 import chai from 'chai'
 const assert = chai.assert;
 
-import agilitySync from '../src/sync-client'
+import * as agilitySync from '../src/sync-client'
 import { createSyncClientUsingConsoleStore } from './_syncClients.config'
 
 
