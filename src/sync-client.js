@@ -83,3 +83,4 @@ function createSyncClient(userConfig) {
 }
 
 export { getSyncClient }
+export default { getSyncClient }
