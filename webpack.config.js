@@ -7,7 +7,8 @@ const nodeConfig = {
     output: {
         filename: 'agility-sync-sdk.node.js',
         path: path.resolve(__dirname, 'dist'),
-        libraryTarget: 'commonjs2'
+        libraryTarget: 'commonjs2',
+        libraryExport: 'default'
     },
     optimization: {
         minimize: false

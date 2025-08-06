@@ -35,6 +35,24 @@ Install `@agility/content-sync`:
 npm install @agility/content-sync
 ```
 
+## Import Patterns
+
+```javascript
+// Default import
+import getSyncClient from '@agility/content-sync';
+const syncClient = getSyncClient({...});
+
+// Named import  
+import { getSyncClient } from '@agility/content-sync';
+const syncClient = getSyncClient({...});
+
+// CommonJS
+const getSyncClient = require('@agility/content-sync');
+const syncClient = getSyncClient({...});
+```
+
+> **Note:** If upgrading and encountering `Cannot read properties of undefined (reading 'getSyncClient')`, use `require('@agility/content-sync').default.getSyncClient` for compatibility with transpiled code.
+
 ## Sync to Filesystem (using Defaults)
 1. Create a sync client:
     ```javascript
@@ -62,7 +80,7 @@ npm install @agility/content-sync
 ## Accessing Content
 Once content is in your sync store, you can easily access it as you need it:
 ```javascript
-import agilitySync from '@agility/constent-sync'
+import agilitySync from '@agility/content-sync'
 const syncClient = agilitySync.getSyncClient({
     //your 'guid' from Agility CMS
     guid: 'some-guid',
@@ -175,7 +193,7 @@ module.exports = {
 ```
 2. Register the `syncClient` to use your **Sync Store**
 ```javascript
-import agilitySync from '@agility/constent-sync'
+import agilitySync from '@agility/content-sync'
 import sampleSyncConsoleInterface from './store-interface-console'
 const syncClient = agilitySync.getSyncClient({
     //your 'guid' from Agility CMS
