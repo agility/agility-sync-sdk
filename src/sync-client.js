@@ -82,5 +82,12 @@ function createSyncClient(userConfig) {
     }
 }
 
+// Export for ES modules
 export { getSyncClient }
-export default { getSyncClient }
+
+// Export for CommonJS - support both direct function call and .default.getSyncClient pattern
+const syncClientExport = getSyncClient;
+syncClientExport.getSyncClient = getSyncClient;
+syncClientExport.default = { getSyncClient };
+
+export default syncClientExport
