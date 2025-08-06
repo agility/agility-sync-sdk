@@ -1,5 +1,5 @@
 //import agilitySync from '../dist/agility-sync-sdk.node'
-import agilitySync from '../src/sync-client'
+import * as agilitySync from '../src/sync-client'
 
 import storeInterfaceConsole from '../src/store-interface-console'
 
@@ -17,7 +17,7 @@ function createSyncClient() {
         logLevel: 'info',
         channels: ['website'],
         languages: ['en-us'],
-        baseUrl: "https://api-dev.aglty.io"
+        baseUrl: `https://api-dev.aglty.io/${guid}`
     });
 
     return syncClient;
@@ -34,7 +34,7 @@ function createSyncClientUsingConsoleStore() {
             interface: storeInterfaceConsole,
             options: {}
         },
-        baseUrl: "https://api-dev.aglty.io"
+        baseUrl: `https://api-dev.aglty.io/${guid}`
     });
     return syncClient;
 }
@@ -47,7 +47,7 @@ function createPreviewSyncClient() {
         isPreview: true,
         channels: ['website'],
         languages: ['en-us'],
-        baseUrl: "https://api-dev.aglty.io"
+        baseUrl: `https://api-dev.aglty.io/${guid}`
     });
     return syncClient;
 }

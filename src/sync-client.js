@@ -1,10 +1,10 @@
 import agility from '@agility/content-fetch'
-import syncContent from './methods/syncContent'
-import clearSync from './methods/clearSync'
-import syncPages from './methods/syncPages'
-import runSync from './methods/runSync'
+import syncContentInternal from './methods/syncContent'
+import clearSyncInternal from './methods/clearSync'
+import syncPagesInternal from './methods/syncPages'
+import runSyncInternal from './methods/runSync'
 
-import storeInterface from './store-interface'
+import { StoreInterface } from './store-interface'
 import storeInterfaceFileSystem from './store-interface-filesystem'
 
 function getSyncClient(userConfig) {
@@ -64,17 +64,30 @@ function createSyncClient(userConfig) {
     let store = config.store.interface;
 
     //set the sync storage interface provider, it will also validate it
-    storeInterface.setStore(store, config.store.options);
+    const storeInterface = new StoreInterface(store, config.store.options);
+
+
+    const syncPages = (languageCode, token) => syncPagesInternal(languageCode, token, storeInterface, agilityClient);
+
+    const syncContent = (languageCode, token) => syncContentInternal(languageCode, token, storeInterface, agilityClient);
 
     return {
         config,
         agilityClient,
         syncContent,
         syncPages,
-        clearSync,
-        runSync,
+        clearSync: () => clearSyncInternal(storeInterface),
+        runSync: () => runSyncInternal(config, agilityClient, storeInterface, syncContent, syncPages),
         store: storeInterface
     }
 }
 
-export default { getSyncClient }
+// Export for ES modules
+export { getSyncClient }
+
+// Export for CommonJS - support both direct function call and .default.getSyncClient pattern
+const syncClientExport = getSyncClient;
+syncClientExport.getSyncClient = getSyncClient;
+syncClientExport.default = { getSyncClient };
+
+export default syncClientExport
