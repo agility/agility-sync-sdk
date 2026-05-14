@@ -1,8 +1,8 @@
-import fs from 'fs'
-import os from 'os'
-import path from 'path'
-import { sleep } from "./util.js"
-import { lockSync, unlockSync, checkSync, check } from "proper-lockfile"
+const fs = require('fs')
+const os = require('os')
+const path = require('path')
+const {sleep} = require("./util")
+const { lockSync, check }  = require("proper-lockfile")
 import dotenv from "dotenv"
 
 dotenv.config({
@@ -18,7 +18,7 @@ dotenv.config({
  * @param {String} params.itemType - The type of item being saved/updated, expected values are `item`, `page`, `sitemap`, `nestedsitemap`, `state`, `urlredirections`
  * @param {String} params.languageCode - The locale code associated to the item being saved/updated
  * @param {(String|Number)} params.itemID - The ID of the item being saved/updated - this could be a string or number depending on the itemType
- * @returns {Void}
+ * @returns {promise<void>}
  */
 const saveItem = async ({ options, item, itemType, languageCode, itemID }) => {
 
@@ -28,11 +28,11 @@ const saveItem = async ({ options, item, itemType, languageCode, itemID }) => {
 
 
 	if (!fs.existsSync(dirPath)) {
-		fs.mkdirSync(dirPath, { recursive: true });
+		await fs.promises.mkdir(dirPath, { recursive: true });
 	}
 
 	let json = JSON.stringify(item);
-	fs.writeFileSync(filePath, json);
+	await fs.promises.writeFile(filePath, json);
 }
 /**
  * The function to handle deleting an item to your storage. This could be a Content Item, Page, Url Redirections, Sync State (state), or Sitemap.
@@ -42,14 +42,14 @@ const saveItem = async ({ options, item, itemType, languageCode, itemID }) => {
  * @param {String} params.itemType - The type of item being deleted, expected values are `item`, `page`, `sitemap`, `nestedsitemap`, `state`, `urlredirections`
  * @param {String} params.languageCode - The locale code associated to the item being saved/updated
  * @param {(String|Number)} params.itemID - The ID of the item being deleted - this could be a string or number depending on the itemType
- * @returns {Void}
+ * @returns {promise<void>}
  */
 const deleteItem = async ({ options, itemType, languageCode, itemID }) => {
 
 	let filePath = getFilePath({ options, itemType, languageCode, itemID });
 
 	if (fs.existsSync(filePath)) {
-		fs.unlinkSync(filePath);
+		await fs.promises.unlink(filePath);
 	}
 
 }
@@ -63,7 +63,7 @@ const deleteItem = async ({ options, itemType, languageCode, itemID }) => {
  * @param {(String|Number)} params.itemID - The ID of the item being updated - this could be a string or number depending on the itemType
  * @param {String} params.referenceName - The reference name of the Content List that this Content Item should be added to
  * @param {String} params.definitionName - The Model name that the Content Item is based on
- * @returns {Void}
+ * @returns {Promise<void>}
  */
 const mergeItemToList = async ({ options, item, languageCode, itemID, referenceName, definitionName }) => {
 
@@ -107,14 +107,14 @@ const mergeItemToList = async ({ options, item, languageCode, itemID, referenceN
  * @param {String} params.itemType - The type of item being accessed, expected values are `item`, `list`, `page`, `sitemap`, `nestedsitemap`, `state`, `urlredirections`
  * @param {String} params.languageCode - The locale code associated to the item being accessed
  * @param {(String|Number)} params.itemID - The ID of the item being accessed - this could be a string or number depending on the itemType
- * @returns {Object}
+ * @returns {Promise<Object>}
  */
 const getItem = async ({ options, itemType, languageCode, itemID }) => {
 	let filePath = getFilePath({ options, itemType, languageCode, itemID });
 
 	if (!fs.existsSync(filePath)) return null;
 
-	let json = fs.readFileSync(filePath, 'utf8');
+	let json = await fs.promises.readFile(filePath, 'utf8');
 	return JSON.parse(json);
 }
 
@@ -123,10 +123,10 @@ const getItem = async ({ options, itemType, languageCode, itemID }) => {
  * @param {Object} params - The parameters object
  * @param {Object} params.options - A flexible object that can contain any properties specifically related to this interface
  * @param {String} params.options.rootPath - The path to store/access the content as JSON 
- * @returns {Void}
+ * @returns {Promise<void>}
  */
 const clearItems = async ({ options }) => {
-	fs.rmdirSync(options.rootPath, { recursive: true })
+	await fs.promises.rmdir(options.rootPath, { recursive: true })
 }
 
 
@@ -141,7 +141,7 @@ const mutexLock = async () => {
 	const dir = os.tmpdir();
 	const lockFile = `${dir}/${"agility-sync"}.mutex`
 	if (! fs.existsSync(lockFile)) {
-		fs.writeFileSync(lockFile, "agility-sync");
+		await fs.promises.writeFile(lockFile, "agility-sync");
 	}
 
 	//THE LOCK IS ALREADY HELD - WAIT UP!
