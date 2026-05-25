@@ -15,6 +15,12 @@ export class StoreInterface {
 		this.options = options;
 	}
 
+	get mutexLock() {
+		return this.store && this.store.mutexLock
+			? () => this.store.mutexLock()
+			: undefined;
+	}
+
 	validateStoreInterface(storeCandidate) {
 		if (!storeCandidate.clearItems) {
 			throw new TypeError(

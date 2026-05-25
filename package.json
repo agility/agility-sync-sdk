@@ -4,6 +4,7 @@
   "description": "JavaScript SDK for synchronizing content from Agility CMS",
   "main": "dist/agility-sync-sdk.node.js",
   "scripts": {
+    "pretest": "npm run build",
     "test": "nyc --reporter=html --reporter=text mocha --require @babel/register --recursive ./test/",
     "generate-docs": "node_modules/.bin/jsdoc --configure .jsdoc.json --verbose",
     "build": "webpack --config webpack.config -p"
