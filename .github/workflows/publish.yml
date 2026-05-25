@@ -19,6 +19,9 @@ jobs:
         with:
           node-version: 20
 
+      - name: Upgrade npm for Trusted Publisher OIDC support
+        run: npm install -g npm@latest
+
       - name: Install dependencies
         run: npm ci
 
