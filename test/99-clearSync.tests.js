@@ -3,6 +3,7 @@ const assert = chai.assert;
 const expect = chai.expect;
 
 import { createSyncClient, createPreviewSyncClient } from './_syncClients.config'
+import { skipIfNoCredentials } from './_skipIfNoCredentials'
 
 /*
     This file contains static references to content from the instance configured in the apiClient.config file.
@@ -11,6 +12,8 @@ import { createSyncClient, createPreviewSyncClient } from './_syncClients.config
 
 const languageCode = 'en-us'
 describe('clearSync:', async function () {
+
+    before(skipIfNoCredentials());
 
     it('should run the clear sync method which should remove local files', async function () {
         var sync = createSyncClient();

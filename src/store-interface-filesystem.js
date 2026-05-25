@@ -1,8 +1,7 @@
 const fs = require('fs')
 const os = require('os')
 const path = require('path')
-const {sleep} = require("./util")
-const { lockSync, check }  = require("proper-lockfile")
+const { lock } = require("proper-lockfile")
 import dotenv from "dotenv"
 
 dotenv.config({
@@ -26,10 +25,7 @@ const saveItem = async ({ options, item, itemType, languageCode, itemID }) => {
 
 	let dirPath = path.dirname(filePath);
 
-
-	if (!fs.existsSync(dirPath)) {
-		await fs.promises.mkdir(dirPath, { recursive: true });
-	}
+	await fs.promises.mkdir(dirPath, { recursive: true });
 
 	let json = JSON.stringify(item);
 	await fs.promises.writeFile(filePath, json);
@@ -48,8 +44,10 @@ const deleteItem = async ({ options, itemType, languageCode, itemID }) => {
 
 	let filePath = getFilePath({ options, itemType, languageCode, itemID });
 
-	if (fs.existsSync(filePath)) {
+	try {
 		await fs.promises.unlink(filePath);
+	} catch (err) {
+		if (err.code !== 'ENOENT') throw err;
 	}
 
 }
@@ -112,9 +110,13 @@ const mergeItemToList = async ({ options, item, languageCode, itemID, referenceN
 const getItem = async ({ options, itemType, languageCode, itemID }) => {
 	let filePath = getFilePath({ options, itemType, languageCode, itemID });
 
-	if (!fs.existsSync(filePath)) return null;
-
-	let json = await fs.promises.readFile(filePath, 'utf8');
+	let json;
+	try {
+		json = await fs.promises.readFile(filePath, 'utf8');
+	} catch (err) {
+		if (err.code === 'ENOENT') return null;
+		throw err;
+	}
 	return JSON.parse(json);
 }
 
@@ -126,60 +128,29 @@ const getItem = async ({ options, itemType, languageCode, itemID }) => {
  * @returns {Promise<void>}
  */
 const clearItems = async ({ options }) => {
-	await fs.promises.rmdir(options.rootPath, { recursive: true })
+	await fs.promises.rm(options.rootPath, { recursive: true, force: true })
 }
 
 
+
+const lockFilePath = path.join(os.tmpdir(), "agility-sync.mutex")
 
 /**
  * The function to handle multi-threaded Syncs that may be happening at the same time. If you need to prevent a sync from happening and let it wait until another sync has finished use this.
- * @returns {Promise}
+ * @returns {Promise<Function>} Release function — call it to release the lock.
  */
 const mutexLock = async () => {
-
-
-	const dir = os.tmpdir();
-	const lockFile = `${dir}/${"agility-sync"}.mutex`
-	if (! fs.existsSync(lockFile)) {
-		await fs.promises.writeFile(lockFile, "agility-sync");
-	}
-
-	//THE LOCK IS ALREADY HELD - WAIT UP!
-	await waitOnLock(lockFile)
-
+	// proper-lockfile needs the target file to exist
 	try {
-		return lockSync(lockFile)
+		await fs.promises.writeFile(lockFilePath, "agility-sync", { flag: "wx" })
 	} catch (err) {
-		if (`${err}`.indexOf("Lock file is already being held") !== -1) {
-
-			//this error happens when 2 processes try to get a lock at the EXACT same time (very rare)
-			await sleep(100)
-			await waitOnLock(lockFile)
-
-			try {
-				return lockSync(lockFile)
-			} catch (e2) {
-				if (`${err}`.indexOf("Lock file is already being held") !== -1) {
-
-					//this error happens when 2 processes try to get a lock at the EXACT same time (very rare)
-					await sleep(100)
-					await waitOnLock(lockFile)
-					return lockSync(lockFile)
-				}
-			}
-		}
-
-		throw Error("The mutex lock could not be obtained.")
+		if (err.code !== "EEXIST") throw err
 	}
 
-}
-
-
-//private function to get a wait on a lock file
-const waitOnLock = async (lockFile) => {
-	while (await check(lockFile)) {
-		await sleep(100)
-	}
+	return await lock(lockFilePath, {
+		retries: { retries: 30, minTimeout: 100, maxTimeout: 1000 },
+		stale: 60000,
+	})
 }
 
 //private function to get path of an item
