@@ -1,8 +1,7 @@
 const fs = require('fs')
 const os = require('os')
 const path = require('path')
-const {sleep} = require("./util")
-const { lockSync, check }  = require("proper-lockfile")
+const { lock } = require("proper-lockfile")
 import dotenv from "dotenv"
 
 dotenv.config({
@@ -134,55 +133,24 @@ const clearItems = async ({ options }) => {
 
 
 
+const lockFilePath = path.join(os.tmpdir(), "agility-sync.mutex")
+
 /**
  * The function to handle multi-threaded Syncs that may be happening at the same time. If you need to prevent a sync from happening and let it wait until another sync has finished use this.
- * @returns {Promise}
+ * @returns {Promise<Function>} Release function — call it to release the lock.
  */
 const mutexLock = async () => {
-
-
-	const dir = os.tmpdir();
-	const lockFile = `${dir}/${"agility-sync"}.mutex`
-	if (! fs.existsSync(lockFile)) {
-		await fs.promises.writeFile(lockFile, "agility-sync");
-	}
-
-	//THE LOCK IS ALREADY HELD - WAIT UP!
-	await waitOnLock(lockFile)
-
+	// proper-lockfile needs the target file to exist
 	try {
-		return lockSync(lockFile)
+		await fs.promises.writeFile(lockFilePath, "agility-sync", { flag: "wx" })
 	} catch (err) {
-		if (`${err}`.indexOf("Lock file is already being held") !== -1) {
-
-			//this error happens when 2 processes try to get a lock at the EXACT same time (very rare)
-			await sleep(100)
-			await waitOnLock(lockFile)
-
-			try {
-				return lockSync(lockFile)
-			} catch (e2) {
-				if (`${err}`.indexOf("Lock file is already being held") !== -1) {
-
-					//this error happens when 2 processes try to get a lock at the EXACT same time (very rare)
-					await sleep(100)
-					await waitOnLock(lockFile)
-					return lockSync(lockFile)
-				}
-			}
-		}
-
-		throw Error("The mutex lock could not be obtained.")
+		if (err.code !== "EEXIST") throw err
 	}
 
-}
-
-
-//private function to get a wait on a lock file
-const waitOnLock = async (lockFile) => {
-	while (await check(lockFile)) {
-		await sleep(100)
-	}
+	return await lock(lockFilePath, {
+		retries: { retries: 30, minTimeout: 100, maxTimeout: 1000 },
+		stale: 60000,
+	})
 }
 
 //private function to get path of an item
