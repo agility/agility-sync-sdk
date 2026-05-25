@@ -26,10 +26,7 @@ const saveItem = async ({ options, item, itemType, languageCode, itemID }) => {
 
 	let dirPath = path.dirname(filePath);
 
-
-	if (!fs.existsSync(dirPath)) {
-		await fs.promises.mkdir(dirPath, { recursive: true });
-	}
+	await fs.promises.mkdir(dirPath, { recursive: true });
 
 	let json = JSON.stringify(item);
 	await fs.promises.writeFile(filePath, json);
@@ -48,8 +45,10 @@ const deleteItem = async ({ options, itemType, languageCode, itemID }) => {
 
 	let filePath = getFilePath({ options, itemType, languageCode, itemID });
 
-	if (fs.existsSync(filePath)) {
+	try {
 		await fs.promises.unlink(filePath);
+	} catch (err) {
+		if (err.code !== 'ENOENT') throw err;
 	}
 
 }
@@ -112,9 +111,13 @@ const mergeItemToList = async ({ options, item, languageCode, itemID, referenceN
 const getItem = async ({ options, itemType, languageCode, itemID }) => {
 	let filePath = getFilePath({ options, itemType, languageCode, itemID });
 
-	if (!fs.existsSync(filePath)) return null;
-
-	let json = await fs.promises.readFile(filePath, 'utf8');
+	let json;
+	try {
+		json = await fs.promises.readFile(filePath, 'utf8');
+	} catch (err) {
+		if (err.code === 'ENOENT') return null;
+		throw err;
+	}
 	return JSON.parse(json);
 }
 
@@ -126,7 +129,7 @@ const getItem = async ({ options, itemType, languageCode, itemID }) => {
  * @returns {Promise<void>}
  */
 const clearItems = async ({ options }) => {
-	await fs.promises.rmdir(options.rootPath, { recursive: true })
+	await fs.promises.rm(options.rootPath, { recursive: true, force: true })
 }
 
 
