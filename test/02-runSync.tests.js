@@ -4,6 +4,7 @@ const expect = chai.expect;
 
 
 import { createSyncClient, createSyncClientUsingConsoleStore, createPreviewSyncClient } from './_syncClients.config'
+import { skipIfNoCredentials } from './_skipIfNoCredentials'
 
 const sleep = (ms) => {
 	return new Promise(resolve => setTimeout(resolve, ms));
@@ -19,6 +20,7 @@ const sleep = (ms) => {
 describe('runSync:', async function () {
 
 	this.timeout('120s');
+	before(skipIfNoCredentials());
 
 	it('should run 1 sync method using the filesystem', async function () {
 
@@ -59,11 +61,32 @@ describe('runSync:', async function () {
 
 	})
 
+	it('skips a second runSync within 1 second of the last one (throttle)', async function () {
+
+		const sync = createSyncClient();
+		await sync.runSync();
+
+		const stateBefore = await sync.store.getSyncState('en-us');
+		assert.exists(stateBefore, 'first runSync should have written sync state');
+		const firstSyncDate = stateBefore.lastSyncDate;
+
+		// Immediately run again — should be throttled.
+		await sync.runSync();
+
+		const stateAfter = await sync.store.getSyncState('en-us');
+		assert.strictEqual(
+			stateAfter.lastSyncDate,
+			firstSyncDate,
+			'lastSyncDate should be unchanged because the second runSync was throttled'
+		);
+	})
+
 });
 
 describe('runSync:', async function () {
 
 	this.timeout('120s');
+	before(skipIfNoCredentials());
 
 	it('should run sync method using the console store', async function () {
 		var sync = createSyncClientUsingConsoleStore();

@@ -3,7 +3,7 @@ const assert = chai.assert;
 
 import * as agilitySync from '../src/sync-client'
 import syncClientDefault from '../src/sync-client'
-import { createSyncClientUsingConsoleStore } from './_syncClients.config'
+import { createSyncClientUsingConsoleStore, hasLiveCredentials } from './_syncClients.config'
 
 
 //This is a synchronous test
@@ -32,7 +32,8 @@ describe('getSyncClient:', function() {
     })
 
     it('should validate a valid external store interface (console)', function(done) {
-        const syncClient = createSyncClientUsingConsoleStore()    
+        if (!hasLiveCredentials) return this.skip();
+        const syncClient = createSyncClientUsingConsoleStore()
         done();
     })
 

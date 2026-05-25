@@ -2,11 +2,19 @@
 import * as agilitySync from '../src/sync-client'
 
 import storeInterfaceConsole from '../src/store-interface-console'
+import dotenv from 'dotenv'
+import path from 'path'
 
-// Agility Instance = 'Headless Integration Testing' [Dev]
-const guid = 'c741222b-1080-45f6-9a7f-982381c5a485';
-const apiKeyFetch = 'UnitTestsFetch.2ace650991363fbcffa6776d411d1b0d616b8e3424ce842b81cba7af0039197e';
-const apiKeyPreview = 'UnitTestsPreview.69e6bca345ced0b7ca5ab358b351ea5c870790a5945c25d749a865332906b124';
+// Load .env.test for local dev; in CI the values come from the environment directly.
+dotenv.config({ path: path.resolve(__dirname, '..', '.env.test') })
+
+const guid = process.env.AGILITY_TEST_GUID
+const apiKeyFetch = process.env.AGILITY_TEST_API_KEY_FETCH
+const apiKeyPreview = process.env.AGILITY_TEST_API_KEY_PREVIEW
+const baseUrl = process.env.AGILITY_TEST_BASE_URL
+
+// If credentials aren't set (e.g. fork PR with no secrets), live-API tests should skip.
+const hasLiveCredentials = Boolean(guid && apiKeyFetch && apiKeyPreview && baseUrl)
 
 
 function createSyncClient() {
@@ -17,7 +25,7 @@ function createSyncClient() {
         logLevel: 'info',
         channels: ['website'],
         languages: ['en-us'],
-        baseUrl: `https://api-dev.aglty.io/${guid}`
+        baseUrl: baseUrl
     });
 
     return syncClient;
@@ -34,7 +42,7 @@ function createSyncClientUsingConsoleStore() {
             interface: storeInterfaceConsole,
             options: {}
         },
-        baseUrl: `https://api-dev.aglty.io/${guid}`
+        baseUrl: baseUrl
     });
     return syncClient;
 }
@@ -47,7 +55,7 @@ function createPreviewSyncClient() {
         isPreview: true,
         channels: ['website'],
         languages: ['en-us'],
-        baseUrl: `https://api-dev.aglty.io/${guid}`
+        baseUrl: baseUrl
     });
     return syncClient;
 }
@@ -55,5 +63,6 @@ function createPreviewSyncClient() {
 export {
     createSyncClient,
     createSyncClientUsingConsoleStore,
-    createPreviewSyncClient
+    createPreviewSyncClient,
+    hasLiveCredentials
 }
