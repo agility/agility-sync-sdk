@@ -1,8 +1,8 @@
-const fs = require('fs')
-const os = require('os')
-const path = require('path')
-const {sleep} = require("./util")
-const { lockSync, check }  = require("proper-lockfile")
+import fs from 'fs'
+import os from 'os'
+import path from 'path'
+import { sleep } from "./util"
+import { lockSync, check } from "proper-lockfile"
 import dotenv from "dotenv"
 
 dotenv.config({
