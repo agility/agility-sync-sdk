@@ -5,7 +5,7 @@ import {
 	logWarning,
 	logSuccess,
 	asyncForEach,
-} from "./util";
+} from "./util.js";
 export class StoreInterface {
 	store = null;
 	options = null;

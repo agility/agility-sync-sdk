@@ -1,4 +1,4 @@
-import { logSuccess } from '../util'
+import { logSuccess } from '../util.js'
 
 export default async function (storeInterface) {
 	await storeInterface.clear();

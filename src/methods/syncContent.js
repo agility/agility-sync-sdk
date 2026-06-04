@@ -1,4 +1,4 @@
-import { logInfo, logWarning, sleep } from '../util'
+import { logInfo, logWarning, sleep } from '../util.js'
 
 
 /**

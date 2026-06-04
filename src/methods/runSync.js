@@ -1,4 +1,4 @@
-import { logInfo, logSuccess } from '../util'
+import { logInfo, logSuccess } from '../util.js'
 
 
 const syncRunner = async function (config, agilityClient, storeInterface, syncContent, syncPages) {

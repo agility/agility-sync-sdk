@@ -1,11 +1,11 @@
 import agility from '@agility/content-fetch'
-import syncContentInternal from './methods/syncContent'
-import clearSyncInternal from './methods/clearSync'
-import syncPagesInternal from './methods/syncPages'
-import runSyncInternal from './methods/runSync'
+import syncContentInternal from './methods/syncContent.js'
+import clearSyncInternal from './methods/clearSync.js'
+import syncPagesInternal from './methods/syncPages.js'
+import runSyncInternal from './methods/runSync.js'
 
-import { StoreInterface } from './store-interface'
-import storeInterfaceFileSystem from './store-interface-filesystem'
+import { StoreInterface } from './store-interface.js'
+import storeInterfaceFileSystem from './store-interface-filesystem.js'
 
 function getSyncClient(userConfig) {
     validateConfigParams(userConfig);
