@@ -1,7 +1,7 @@
 import fs from 'fs'
 import os from 'os'
 import path from 'path'
-import { sleep } from "./util"
+import { sleep } from "./util.js"
 import { lockSync, check } from "proper-lockfile"
 import dotenv from "dotenv"
 
