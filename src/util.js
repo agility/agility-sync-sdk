@@ -70,7 +70,14 @@ const sleep = (ms) => {
 	return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+// Set on the error a store's getItem throws when a cached file exists but can't be parsed.
+const CORRUPT_CACHE_ERROR_CODE = 'AGILITY_SYNC_CORRUPT_FILE'
+
+const isCorruptCacheError = (err) => !!err && err.code === CORRUPT_CACHE_ERROR_CODE
+
 export {
+	CORRUPT_CACHE_ERROR_CODE,
+	isCorruptCacheError,
 	logDebug,
 	logInfo,
 	logError,

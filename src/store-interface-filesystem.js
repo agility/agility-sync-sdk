@@ -1,8 +1,9 @@
 import fs from 'fs'
 import os from 'os'
 import path from 'path'
-import { sleep } from "./util.js"
-import { lockSync, check } from "proper-lockfile"
+import crypto from 'crypto'
+import { sleep, logWarning, CORRUPT_CACHE_ERROR_CODE } from "./util.js"
+import { lock } from "proper-lockfile"
 import dotenv from "dotenv"
 
 dotenv.config({
@@ -26,13 +27,44 @@ const saveItem = async ({ options, item, itemType, languageCode, itemID }) => {
 
 	let dirPath = path.dirname(filePath);
 
-
-	if (!fs.existsSync(dirPath)) {
-		await fs.promises.mkdir(dirPath, { recursive: true });
-	}
+	// mkdir with recursive is a no-op when the folder exists
+	await fs.promises.mkdir(dirPath, { recursive: true });
 
 	let json = JSON.stringify(item);
-	await fs.promises.writeFile(filePath, json);
+	await writeFileAtomic(filePath, json);
+}
+
+/**
+ * Write a file so that readers only ever see the old content or the new content, never a mix.
+ * A plain writeFile truncates and then writes, so two writers (or a writer and a reader) that
+ * overlap can leave a short write over a longer one: valid JSON followed by leftover bytes.
+ * Writing to a temp file in the same folder and renaming it over the target is atomic on POSIX.
+ * On Windows the rename can fail briefly while another process has the target open, so retry.
+ * @private
+ */
+const writeFileAtomic = async (filePath, data) => {
+	const tmpPath = `${filePath}.${process.pid}.${crypto.randomBytes(6).toString('hex')}.tmp`
+	try {
+		await fs.promises.writeFile(tmpPath, data)
+	} catch (err) {
+		await fs.promises.unlink(tmpPath).catch(() => { })
+		throw err
+	}
+
+	for (let attempt = 1; ; attempt++) {
+		try {
+			await fs.promises.rename(tmpPath, filePath)
+			return
+		} catch (err) {
+			const retryable = err.code === 'EPERM' || err.code === 'EBUSY' || err.code === 'EACCES'
+			if (retryable && attempt < 10) {
+				await sleep(20 * attempt)
+				continue
+			}
+			await fs.promises.unlink(tmpPath).catch(() => { })
+			throw err
+		}
+	}
 }
 /**
  * The function to handle deleting an item to your storage. This could be a Content Item, Page, Url Redirections, Sync State (state), or Sitemap.
@@ -48,8 +80,10 @@ const deleteItem = async ({ options, itemType, languageCode, itemID }) => {
 
 	let filePath = getFilePath({ options, itemType, languageCode, itemID });
 
-	if (fs.existsSync(filePath)) {
+	try {
 		await fs.promises.unlink(filePath);
+	} catch (err) {
+		if (err.code !== 'ENOENT') throw err;
 	}
 
 }
@@ -112,10 +146,109 @@ const mergeItemToList = async ({ options, item, languageCode, itemID, referenceN
 const getItem = async ({ options, itemType, languageCode, itemID }) => {
 	let filePath = getFilePath({ options, itemType, languageCode, itemID });
 
-	if (!fs.existsSync(filePath)) return null;
+	let json;
+	try {
+		json = await fs.promises.readFile(filePath, 'utf8');
+	} catch (err) {
+		if (err.code === 'ENOENT') return null;
+		throw err;
+	}
 
-	let json = await fs.promises.readFile(filePath, 'utf8');
-	return JSON.parse(json);
+	try {
+		return JSON.parse(json);
+	} catch (err) {
+		// Tag the error so runSync can recognise a damaged cache file and repair it
+		// (see discardCorruptItem) instead of failing on it forever.
+		const corrupt = new Error(`The sync cache file ${filePath} could not be parsed: ${err.message}`);
+		corrupt.code = CORRUPT_CACHE_ERROR_CODE;
+		corrupt.filePath = filePath;
+		throw corrupt;
+	}
+}
+
+/**
+ * Move damaged cache files out of the way so a full re-sync rebuilds them: the file in `error`, and
+ * every other file in the language's folder that can't be parsed. Finding them all at once means
+ * one full re-sync repairs the whole language, including page, item and sitemap files that a sync
+ * never reads itself. Files are renamed (`*.corrupt-<time>`), not deleted, to keep them for diagnosis.
+ * @param {Object} params - The parameters object
+ * @param {Object} params.options - The store options (rootPath)
+ * @param {Error} params.error - The error getItem threw, carrying `filePath`
+ * @param {String} [params.languageCode] - The language being synced; its folder is checked
+ * @returns {Promise<boolean>} Whether any file was moved. False means nothing changed, so a
+ * re-sync would hit the same error.
+ */
+const discardCorruptItem = async ({ options, error, languageCode }) => {
+	const root = path.resolve(options.rootPath);
+	let moved = 0;
+
+	if (error && error.filePath && isInside(root, error.filePath)) {
+		if (await moveAside(path.resolve(error.filePath))) moved++;
+	}
+
+	if (languageCode) {
+		const languageDir = path.join(root, languageCode);
+		if (isInside(root, languageDir)) {
+			for (const filePath of await listJsonFiles(languageDir)) {
+				if (await isUnparsable(filePath) && await moveAside(filePath)) moved++;
+			}
+		}
+	}
+
+	if (moved > 0) logWarning(`Moved ${moved} damaged sync cache file(s) aside under ${root}.`);
+	return moved > 0;
+}
+
+//private: is target inside root (not root itself, not outside it)?
+const isInside = (root, target) => {
+	const rel = path.relative(root, path.resolve(target));
+	return !!rel && !rel.startsWith('..') && !path.isAbsolute(rel);
+}
+
+//private: rename a file to *.corrupt-<time>; false if it was already gone
+const moveAside = async (filePath) => {
+	try {
+		await fs.promises.rename(filePath, `${filePath}.corrupt-${Date.now()}`);
+		return true;
+	} catch (err) {
+		if (err.code === 'ENOENT') return false;
+		throw err;
+	}
+}
+
+//private: every *.json file under dir, recursively ([] if dir doesn't exist)
+const listJsonFiles = async (dir) => {
+	let entries;
+	try {
+		entries = await fs.promises.readdir(dir, { withFileTypes: true });
+	} catch (err) {
+		if (err.code === 'ENOENT') return [];
+		throw err;
+	}
+	const files = [];
+	for (const entry of entries) {
+		const full = path.join(dir, entry.name);
+		if (entry.isDirectory()) files.push(...await listJsonFiles(full));
+		else if (entry.name.endsWith('.json')) files.push(full);
+	}
+	return files;
+}
+
+//private: true if the file exists and isn't valid JSON
+const isUnparsable = async (filePath) => {
+	let json;
+	try {
+		json = await fs.promises.readFile(filePath, 'utf8');
+	} catch (err) {
+		if (err.code === 'ENOENT') return false;
+		throw err;
+	}
+	try {
+		JSON.parse(json);
+		return false;
+	} catch (err) {
+		return true;
+	}
 }
 
 /**
@@ -131,55 +264,102 @@ const clearItems = async ({ options }) => {
 
 
 
+// How long a sync waits for another sync on the same folder before giving up. A first sync of a
+// large instance can take minutes, and a caller that gives up early fails its page request.
+const LOCK_WAIT_MS = 10 * 60 * 1000
+// A lock not refreshed for this long belongs to a process that died; take it over.
+const LOCK_STALE_MS = 60 * 1000
+const LOCK_RETRY_MS = 200
+
+// One queue per lock, for the syncs in this process: each waits for the one before it.
+const lockQueues = new Map()
+
 /**
- * The function to handle multi-threaded Syncs that may be happening at the same time. If you need to prevent a sync from happening and let it wait until another sync has finished use this.
- * @returns {Promise}
+ * Make syncs on the same cache folder run one at a time, whether they come from this process or
+ * another one on the same machine. Syncs on different folders (live and preview, for example)
+ * don't wait for each other.
+ * @param {Object} [params] - The parameters object
+ * @param {Object} [params.options] - The store options; `rootPath` picks the lock, `lockWaitMs` overrides the wait limit
+ * @returns {Promise<Function>} An async function that releases the lock.
  */
-const mutexLock = async () => {
+const mutexLock = async ({ options } = {}) => {
+	const lockPath = getLockPath(options)
+	const waitMs = (options && options.lockWaitMs) || LOCK_WAIT_MS
+	const startedAt = Date.now()
 
+	// 1. Within this process: queue behind whoever holds or is waiting for this lock.
+	const previous = lockQueues.get(lockPath) || Promise.resolve()
+	let releaseLocal
+	const mine = new Promise((resolve) => { releaseLocal = resolve })
+	const tail = previous.then(() => mine)
+	lockQueues.set(lockPath, tail)
 
-	const dir = os.tmpdir();
-	const lockFile = `${dir}/${"agility-sync"}.mutex`
-	if (! fs.existsSync(lockFile)) {
-		await fs.promises.writeFile(lockFile, "agility-sync");
+	// Our successors wait on `tail`, which only settles after `previous` does, so letting go of
+	// our place (even on a timeout) never lets them overtake the current holder.
+	const leaveQueue = () => {
+		releaseLocal()
+		if (lockQueues.get(lockPath) === tail) lockQueues.delete(lockPath)
 	}
-
-	//THE LOCK IS ALREADY HELD - WAIT UP!
-	await waitOnLock(lockFile)
 
 	try {
-		return lockSync(lockFile)
+		await withTimeout(previous, waitMs)
 	} catch (err) {
-		if (`${err}`.indexOf("Lock file is already being held") !== -1) {
-
-			//this error happens when 2 processes try to get a lock at the EXACT same time (very rare)
-			await sleep(100)
-			await waitOnLock(lockFile)
-
-			try {
-				return lockSync(lockFile)
-			} catch (e2) {
-				if (`${err}`.indexOf("Lock file is already being held") !== -1) {
-
-					//this error happens when 2 processes try to get a lock at the EXACT same time (very rare)
-					await sleep(100)
-					await waitOnLock(lockFile)
-					return lockSync(lockFile)
-				}
-			}
-		}
-
-		throw Error("The mutex lock could not be obtained.")
+		leaveQueue()
+		throw new Error(`Timed out after ${waitMs} ms waiting for another Agility sync on ${lockPath} to finish.`)
 	}
 
+	// 2. Across processes: a lock directory next to the lock path, refreshed while we hold it.
+	const remainingMs = Math.max(LOCK_RETRY_MS, waitMs - (Date.now() - startedAt))
+	let releaseFile
+	try {
+		releaseFile = await lock(lockPath, {
+			realpath: false,
+			stale: LOCK_STALE_MS,
+			retries: {
+				retries: Math.ceil(remainingMs / LOCK_RETRY_MS),
+				factor: 1,
+				minTimeout: LOCK_RETRY_MS,
+				maxTimeout: LOCK_RETRY_MS,
+			},
+			// The library's default throws from a timer, which would crash the whole process.
+			onCompromised: (err) => logWarning(`The Agility sync lock ${lockPath} was compromised: ${err.message}`),
+		})
+	} catch (err) {
+		leaveQueue()
+		if (err.code === 'ELOCKED') {
+			throw new Error(`Timed out after ${waitMs} ms waiting for another process's Agility sync on ${lockPath} to finish.`)
+		}
+		throw err
+	}
+
+	let released = false
+	return async () => {
+		if (released) return
+		released = true
+		try {
+			await releaseFile()
+		} catch (err) {
+			logWarning(`The Agility sync lock ${lockPath} could not be released cleanly: ${err.message}`)
+		} finally {
+			leaveQueue()
+		}
+	}
 }
 
+//private: one lock per cache folder, kept in the OS temp folder so clearing the cache can't remove it
+const getLockPath = (options) => {
+	const rootPath = path.resolve((options && options.rootPath) || '.agility-files')
+	const hash = crypto.createHash('sha1').update(rootPath).digest('hex').slice(0, 16)
+	return path.join(os.tmpdir(), `agility-sync-${hash}.mutex`)
+}
 
-//private function to get a wait on a lock file
-const waitOnLock = async (lockFile) => {
-	while (await check(lockFile)) {
-		await sleep(100)
-	}
+//private: reject if the promise hasn't settled within ms
+const withTimeout = (promise, ms) => {
+	let timer
+	const timeout = new Promise((resolve, reject) => {
+		timer = setTimeout(() => reject(new Error('timeout')), ms)
+	})
+	return Promise.race([promise, timeout]).finally(() => clearTimeout(timer))
 }
 
 //private function to get path of an item
@@ -198,5 +378,6 @@ export default {
 	mergeItemToList,
 	getItem,
 	clearItems,
-	mutexLock
+	mutexLock,
+	discardCorruptItem
 }
