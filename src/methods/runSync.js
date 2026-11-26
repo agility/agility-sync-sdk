@@ -1,7 +1,8 @@
 import { logInfo, logSuccess, logWarning, isCorruptCacheError } from '../util'
 
-// How many damaged cache files one language may repair in a single runSync before giving up.
-const MAX_CORRUPT_FILE_REPAIRS = 5
+// A backstop: how many repair rounds one language may need in a single runSync. One round normally
+// repairs everything, because the store checks the language's whole folder when asked.
+const MAX_CORRUPT_FILE_REPAIRS = 3
 
 const syncRunner = async function (config, agilityClient, storeInterface, syncContent, syncPages) {
 
@@ -33,20 +34,26 @@ const sync = async (config, agilityClient, storeInterface, syncContent, syncPage
 	for (const languageCode of languageCodes) {
 
 		let fullSync = false
+		const repairedFiles = new Set()
 		for (let repairs = 0; ; repairs++) {
 			try {
 				await syncLanguage({ config, agilityClient, storeInterface, syncContent, syncPages, languageCode, fullSync })
 				break
 			} catch (err) {
 				// A cache file that can't be parsed (left by an older SDK's overlapping writes, or a
-				// crash mid-write) would otherwise fail every sync from here on. Move it aside and
-				// sync this language again from the start, which rebuilds it.
+				// crash mid-write) would otherwise fail every sync from here on. Have the store move
+				// it, and any other damaged file for this language, aside, then sync this language
+				// again from the start, which rebuilds them.
 				if (!isCorruptCacheError(err) || repairs >= MAX_CORRUPT_FILE_REPAIRS) throw err
 
-				const handled = await storeInterface.discardCorruptItem(err)
-				if (!handled) throw err
+				// the same file failing again means the repair isn't working; don't loop on it
+				if (err.filePath && repairedFiles.has(err.filePath)) throw err
+				if (err.filePath) repairedFiles.add(err.filePath)
 
-				logWarning(`${err.message} It has been moved aside; re-syncing ${languageCode} from the start.`)
+				const moved = await storeInterface.discardCorruptItem(err, languageCode)
+				if (!moved) throw err
+
+				logWarning(`${err.message} Damaged files have been moved aside; re-syncing ${languageCode} from the start.`)
 				fullSync = true
 			}
 		}

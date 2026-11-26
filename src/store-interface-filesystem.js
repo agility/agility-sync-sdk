@@ -167,25 +167,87 @@ const getItem = async ({ options, itemType, languageCode, itemID }) => {
 }
 
 /**
- * Move a cache file that failed to parse out of the way, so the next sync rebuilds it.
- * The file is renamed, not deleted, to keep it for diagnosis.
+ * Move damaged cache files out of the way so a full re-sync rebuilds them: the file in `error`, and
+ * every other file in the language's folder that can't be parsed. Finding them all at once means
+ * one full re-sync repairs the whole language, including page, item and sitemap files that a sync
+ * never reads itself. Files are renamed (`*.corrupt-<time>`), not deleted, to keep them for diagnosis.
  * @param {Object} params - The parameters object
  * @param {Object} params.options - The store options (rootPath)
  * @param {Error} params.error - The error getItem threw, carrying `filePath`
- * @returns {Promise<void>}
+ * @param {String} [params.languageCode] - The language being synced; its folder is checked
+ * @returns {Promise<boolean>} Whether any file was moved. False means nothing changed, so a
+ * re-sync would hit the same error.
  */
-const discardCorruptItem = async ({ options, error }) => {
-	if (!error || !error.filePath) return;
-
-	// only ever touch files inside this store's folder
+const discardCorruptItem = async ({ options, error, languageCode }) => {
 	const root = path.resolve(options.rootPath);
-	const filePath = path.resolve(error.filePath);
-	if (!filePath.startsWith(root + path.sep)) return;
+	let moved = 0;
 
+	if (error && error.filePath && isInside(root, error.filePath)) {
+		if (await moveAside(path.resolve(error.filePath))) moved++;
+	}
+
+	if (languageCode) {
+		const languageDir = path.join(root, languageCode);
+		if (isInside(root, languageDir)) {
+			for (const filePath of await listJsonFiles(languageDir)) {
+				if (await isUnparsable(filePath) && await moveAside(filePath)) moved++;
+			}
+		}
+	}
+
+	if (moved > 0) logWarning(`Moved ${moved} damaged sync cache file(s) aside under ${root}.`);
+	return moved > 0;
+}
+
+//private: is target inside root (not root itself, not outside it)?
+const isInside = (root, target) => {
+	const rel = path.relative(root, path.resolve(target));
+	return !!rel && !rel.startsWith('..') && !path.isAbsolute(rel);
+}
+
+//private: rename a file to *.corrupt-<time>; false if it was already gone
+const moveAside = async (filePath) => {
 	try {
 		await fs.promises.rename(filePath, `${filePath}.corrupt-${Date.now()}`);
+		return true;
 	} catch (err) {
-		if (err.code !== 'ENOENT') throw err;
+		if (err.code === 'ENOENT') return false;
+		throw err;
+	}
+}
+
+//private: every *.json file under dir, recursively ([] if dir doesn't exist)
+const listJsonFiles = async (dir) => {
+	let entries;
+	try {
+		entries = await fs.promises.readdir(dir, { withFileTypes: true });
+	} catch (err) {
+		if (err.code === 'ENOENT') return [];
+		throw err;
+	}
+	const files = [];
+	for (const entry of entries) {
+		const full = path.join(dir, entry.name);
+		if (entry.isDirectory()) files.push(...await listJsonFiles(full));
+		else if (entry.name.endsWith('.json')) files.push(full);
+	}
+	return files;
+}
+
+//private: true if the file exists and isn't valid JSON
+const isUnparsable = async (filePath) => {
+	let json;
+	try {
+		json = await fs.promises.readFile(filePath, 'utf8');
+	} catch (err) {
+		if (err.code === 'ENOENT') return false;
+		throw err;
+	}
+	try {
+		JSON.parse(json);
+		return false;
+	} catch (err) {
+		return true;
 	}
 }
 

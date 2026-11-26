@@ -75,6 +75,71 @@ describe('sync lock and cache repair (PROD-3455, unit):', function () {
 			assert.strictEqual(listSignature(list), listSignature(expectedList(seed, changes)))
 		})
 
+		it('many damaged files are all repaired with one full re-sync, including files the sync never reads', async function () {
+			const rootPath = newRoot()
+			const seed = seedItems()
+			const changes = defaultChanges()
+			seedCache(rootPath, seed)
+
+			const lang = path.join(rootPath, 'en-us')
+			// the list, two items, a page and a sitemap; the sync itself only ever reads the list
+			fs.mkdirSync(path.join(lang, 'page'), { recursive: true })
+			fs.mkdirSync(path.join(lang, 'sitemap'), { recursive: true })
+			fs.writeFileSync(path.join(lang, 'page', '9.json'), '{"pageID":9,"zon')
+			fs.writeFileSync(path.join(lang, 'sitemap', 'website.json'), '{"/a":1}xx')
+			fs.appendFileSync(path.join(lang, 'list', `${LIST_REF}.json`), '"}]')
+			fs.appendFileSync(path.join(lang, 'item', '20.json'), 'garbage')
+			fs.appendFileSync(path.join(lang, 'item', '21.json'), '}')
+
+			const feed = [...seed, ...changes]
+			const client = createStubbedSyncClient(rootPath, feed)
+			let fullPasses = 0
+			const original = client.agilityClient.getSyncContent
+			client.agilityClient.getSyncContent = async (args) => {
+				if (args.syncToken === 0) fullPasses++
+				return original(args)
+			}
+			await client.runSync()
+
+			assert.strictEqual(fullPasses, 1, 'one full re-sync, not one per damaged file')
+			assert.deepEqual(findCorruptFiles(rootPath), [])
+			assert.strictEqual(listSignature(readJson(lang, 'list', `${LIST_REF}.json`)), listSignature(expectedList(seed, changes)))
+			assert.strictEqual(readJson(lang, 'item', '20.json').contentID, 20, 'item rebuilt by the full sync')
+			const corruptCount = (dir) => fs.readdirSync(path.join(lang, dir)).filter((f) => f.includes('.corrupt-')).length
+			assert.strictEqual(corruptCount('page') + corruptCount('sitemap'), 2, 'page and sitemap moved aside too')
+		})
+
+		it('stops at once when the store did not move anything, instead of re-syncing for nothing', async function () {
+			const rootPath = newRoot()
+			const seed = seedItems(3)
+			seedCache(rootPath, seed)
+
+			// a custom store whose getItem reports a damaged state file it can't say where to find
+			let stateReads = 0
+			const customStore = {
+				...store,
+				getItem: async (args) => {
+					if (args.itemType === 'state') {
+						stateReads++
+						const err = new Error('state is damaged')
+						err.code = 'AGILITY_SYNC_CORRUPT_FILE'
+						throw err
+					}
+					return store.getItem(args)
+				},
+			}
+			const client = createStubbedSyncClient(rootPath, seed, { store: { interface: customStore, options: { rootPath: newRoot() } } })
+
+			let message = null
+			try {
+				await client.runSync()
+			} catch (err) {
+				message = err.message
+			}
+			assert.strictEqual(message, 'state is damaged')
+			assert.strictEqual(stateReads, 1, 'no re-sync rounds when nothing was moved')
+		})
+
 		it('other errors are not swallowed, and the lock is released after them', async function () {
 			const rootPath = newRoot()
 			const seed = seedItems()
@@ -190,6 +255,24 @@ describe('sync lock and cache repair (PROD-3455, unit):', function () {
 			// the timed-out waiter must not have broken the queue
 			const again = await store.mutexLock({ options: { rootPath, lockWaitMs: 1000 } })
 			await again()
+		})
+
+		it('clearSync waits for a running sync instead of deleting the cache under it', async function () {
+			const rootPath = newRoot()
+			const seed = seedItems(3)
+			seedCache(rootPath, seed)
+			const client = createStubbedSyncClient(rootPath, seed)
+
+			const release = await store.mutexLock({ options: { rootPath } })
+			let cleared = false
+			const clearing = client.clearSync().then(() => (cleared = true))
+			await sleep(300)
+			assert.isFalse(cleared, 'clearSync must wait for the lock')
+			assert.isTrue(fs.existsSync(path.join(rootPath, 'en-us')), 'cache untouched while the lock is held')
+
+			await release()
+			await clearing
+			assert.isFalse(fs.existsSync(rootPath), 'cache cleared once the lock was free')
 		})
 
 		it('different folders (live and preview) do not wait for each other', async function () {

@@ -26,14 +26,16 @@ export class StoreInterface {
 	}
 
 	/**
-	 * Move aside a cached file that failed to parse, if the store supports it.
+	 * Move aside damaged cache data, if the store supports it.
 	 * @param {Error} error - The error the store's getItem threw.
-	 * @returns {Promise<boolean>} Whether the store handled it.
+	 * @param {String} languageCode - The language being synced.
+	 * @returns {Promise<boolean>} True only if the store says it moved something; anything else
+	 * means a re-sync would hit the same error.
 	 */
-	discardCorruptItem = async (error) => {
+	discardCorruptItem = async (error, languageCode) => {
 		if (!this.store || typeof this.store.discardCorruptItem !== "function") return false;
-		await this.store.discardCorruptItem({ options: this.options, error });
-		return true;
+		const moved = await this.store.discardCorruptItem({ options: this.options, error, languageCode });
+		return moved === true;
 	};
 
 	validateStoreInterface(storeCandidate) {

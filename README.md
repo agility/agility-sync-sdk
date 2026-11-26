@@ -220,7 +220,8 @@ syncClient.runSync();
 A **Sync Store** can also export these. The built-in filesystem store implements both.
 
 - `mutexLock({ options })`: return a promise of an async `release` function. `runSync` holds this lock for the whole sync, so overlapping syncs on the same store run one at a time. Without it, syncs that overlap (for example concurrent page requests in Next.js) can interleave their writes.
-- `discardCorruptItem({ options, error })`: called when `getItem` threw an error with `code === 'AGILITY_SYNC_CORRUPT_FILE'` (a stored item that exists but can't be read). Move the bad item out of the way; `runSync` then re-syncs that language from the start, which rebuilds it.
+- `discardCorruptItem({ options, error, languageCode })`: called when `getItem` threw an error with `code === 'AGILITY_SYNC_CORRUPT_FILE'` (a stored item that exists but can't be read). Move the bad item, and any other damaged items for that language, out of the way, and return `true` if anything was moved. `runSync` then re-syncs that language from the start, which rebuilds them. Returning anything else makes `runSync` throw the original error.
+- `mutexLock` is also taken by `clearSync`, so a clear never runs in the middle of a sync.
 
 
 
