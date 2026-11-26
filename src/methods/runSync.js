@@ -1,10 +1,12 @@
-import { logInfo, logSuccess } from '../util'
+import { logInfo, logSuccess, logWarning, isCorruptCacheError } from '../util'
 
+// How many damaged cache files one language may repair in a single runSync before giving up.
+const MAX_CORRUPT_FILE_REPAIRS = 5
 
 const syncRunner = async function (config, agilityClient, storeInterface, syncContent, syncPages) {
 
 
-	//if a mutex has been defined, call the wait lock
+	//if the store has a lock, hold it for the whole sync so overlapping syncs run one at a time
 	let lockRelease = null
 	if (storeInterface.mutexLock !== undefined) {
 		lockRelease = await storeInterface.mutexLock()
@@ -12,15 +14,12 @@ const syncRunner = async function (config, agilityClient, storeInterface, syncCo
 
 	try {
 
-		//check to see
-
-
 		//actually do the sync
 		await sync(config, agilityClient, storeInterface, syncContent, syncPages)
 
 	} finally {
 		if (lockRelease) {
-			lockRelease()
+			await lockRelease()
 		}
 	}
 
@@ -30,63 +29,87 @@ const syncRunner = async function (config, agilityClient, storeInterface, syncCo
 const sync = async (config, agilityClient, storeInterface, syncContent, syncPages) => {
 
 	const languageCodes = config.languages;
-	const channels = config.channels;
-
-	const modeStr = config.isPreview ? "preview" : "live"
 
 	for (const languageCode of languageCodes) {
 
+		let fullSync = false
+		for (let repairs = 0; ; repairs++) {
+			try {
+				await syncLanguage({ config, agilityClient, storeInterface, syncContent, syncPages, languageCode, fullSync })
+				break
+			} catch (err) {
+				// A cache file that can't be parsed (left by an older SDK's overlapping writes, or a
+				// crash mid-write) would otherwise fail every sync from here on. Move it aside and
+				// sync this language again from the start, which rebuilds it.
+				if (!isCorruptCacheError(err) || repairs >= MAX_CORRUPT_FILE_REPAIRS) throw err
 
-		let syncState = await storeInterface.getSyncState(languageCode);
+				const handled = await storeInterface.discardCorruptItem(err)
+				if (!handled) throw err
 
-		if (!syncState) syncState = { itemToken: 0, pageToken: 0 };
-
-		const lastSyncDate = syncState.lastSyncDate || null
-		//run at MOST once a second
-		if (lastSyncDate && (new Date()) - new Date(lastSyncDate) < 1000) {
-			//skip sync...
-			continue;
-		}
-
-		logSuccess(`Starting Sync for ${languageCode} - ${modeStr} mode.`);
-		const newItemToken = await syncContent(languageCode, syncState.itemToken);
-		const newPageToken = await syncPages(languageCode, syncState.pageToken);
-
-		if (newItemToken != syncState.itemToken
-			|| newPageToken != syncState.pageToken) {
-			//if we sync ANYTHING - pull the new sitemap down
-
-			for (const channelName of channels) {
-				logInfo(`Updating Sitemap channel ${channelName} in ${languageCode}`);
-
-				const sitemap = await agilityClient.getSitemapFlat({ channelName, languageCode });
-				storeInterface.saveSitemap({ sitemap, languageCode, channelName });
-
-				const sitemapNested = await agilityClient.getSitemapNested({ channelName, languageCode });
-				storeInterface.saveSitemapNested({ sitemapNested, languageCode, channelName });
-
+				logWarning(`${err.message} It has been moved aside; re-syncing ${languageCode} from the start.`)
+				fullSync = true
 			}
 		}
-
-		//save the redirects if they have changed...
-		let urlRedirections = await storeInterface.getUrlRedirections({ languageCode });
-		let lastAccessDate = null;
-		if (urlRedirections) lastAccessDate = urlRedirections.lastAccessDate;
-
-		urlRedirections = await agilityClient.getUrlRedirections({ lastAccessDate });
-		if (urlRedirections && urlRedirections.isUpToDate === false) {
-			logInfo(`URL Redirections Updated and Saved`);
-			await storeInterface.saveUrlRedirections({ urlRedirections, languageCode });
-		}
-
-		syncState.itemToken = newItemToken;
-		syncState.pageToken = newPageToken;
-		syncState.lastSyncDate = new Date();
-
-		await storeInterface.saveSyncState({ syncState, languageCode });
-
-		logSuccess(`Completed Sync for ${languageCode} - ${modeStr} mode.`);
 	}
+}
+
+const syncLanguage = async ({ config, agilityClient, storeInterface, syncContent, syncPages, languageCode, fullSync }) => {
+
+	const channels = config.channels;
+	const modeStr = config.isPreview ? "preview" : "live"
+
+	let syncState = null
+	if (!fullSync) {
+		syncState = await storeInterface.getSyncState(languageCode);
+	}
+
+	if (!syncState) syncState = { itemToken: 0, pageToken: 0 };
+
+	const lastSyncDate = syncState.lastSyncDate || null
+	//run at MOST once a second
+	if (!fullSync && lastSyncDate && (new Date()) - new Date(lastSyncDate) < 1000) {
+		//skip sync...
+		return;
+	}
+
+	logSuccess(`Starting Sync for ${languageCode} - ${modeStr} mode.`);
+	const newItemToken = await syncContent(languageCode, syncState.itemToken);
+	const newPageToken = await syncPages(languageCode, syncState.pageToken);
+
+	if (newItemToken != syncState.itemToken
+		|| newPageToken != syncState.pageToken) {
+		//if we sync ANYTHING - pull the new sitemap down
+
+		for (const channelName of channels) {
+			logInfo(`Updating Sitemap channel ${channelName} in ${languageCode}`);
+
+			const sitemap = await agilityClient.getSitemapFlat({ channelName, languageCode });
+			await storeInterface.saveSitemap({ sitemap, languageCode, channelName });
+
+			const sitemapNested = await agilityClient.getSitemapNested({ channelName, languageCode });
+			await storeInterface.saveSitemapNested({ sitemapNested, languageCode, channelName });
+
+		}
+	}
+
+	//save the redirects if they have changed...
+	let urlRedirections = await storeInterface.getUrlRedirections({ languageCode });
+	let lastAccessDate = null;
+	if (urlRedirections) lastAccessDate = urlRedirections.lastAccessDate;
+
+	urlRedirections = await agilityClient.getUrlRedirections({ lastAccessDate });
+	if (urlRedirections && urlRedirections.isUpToDate === false) {
+		logInfo(`URL Redirections Updated and Saved`);
+		await storeInterface.saveUrlRedirections({ urlRedirections, languageCode });
+	}
+
+	syncState.itemToken = newItemToken;
+	syncState.pageToken = newPageToken;
+	syncState.lastSyncDate = new Date();
+
+	await storeInterface.saveSyncState({ syncState, languageCode });
+
+	logSuccess(`Completed Sync for ${languageCode} - ${modeStr} mode.`);
 }
 
 

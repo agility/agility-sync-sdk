@@ -216,6 +216,12 @@ const syncClient = agilitySync.getSyncClient({
 syncClient.runSync();
 ```
 
+### Optional store functions
+A **Sync Store** can also export these. The built-in filesystem store implements both.
+
+- `mutexLock({ options })`: return a promise of an async `release` function. `runSync` holds this lock for the whole sync, so overlapping syncs on the same store run one at a time. Without it, syncs that overlap (for example concurrent page requests in Next.js) can interleave their writes.
+- `discardCorruptItem({ options, error })`: called when `getItem` threw an error with `code === 'AGILITY_SYNC_CORRUPT_FILE'` (a stored item that exists but can't be read). Move the bad item out of the way; `runSync` then re-syncs that language from the start, which rebuilds it.
+
 
 
 

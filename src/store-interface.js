@@ -15,6 +15,27 @@ export class StoreInterface {
 		this.options = options;
 	}
 
+	/**
+	 * The store's lock, if it has one, bound to this store's options. runSync takes it before syncing
+	 * so that overlapping syncs on the same store run one at a time. Undefined when the store has none.
+	 * (This class wrapper never exposed it before, so the lock was silently skipped: PROD-3455.)
+	 */
+	get mutexLock() {
+		if (!this.store || typeof this.store.mutexLock !== "function") return undefined;
+		return () => this.store.mutexLock({ options: this.options });
+	}
+
+	/**
+	 * Move aside a cached file that failed to parse, if the store supports it.
+	 * @param {Error} error - The error the store's getItem threw.
+	 * @returns {Promise<boolean>} Whether the store handled it.
+	 */
+	discardCorruptItem = async (error) => {
+		if (!this.store || typeof this.store.discardCorruptItem !== "function") return false;
+		await this.store.discardCorruptItem({ options: this.options, error });
+		return true;
+	};
+
 	validateStoreInterface(storeCandidate) {
 		if (!storeCandidate.clearItems) {
 			throw new TypeError(
