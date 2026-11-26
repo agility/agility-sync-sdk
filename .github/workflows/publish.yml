@@ -6,6 +6,8 @@ on:
       - master
     paths:
       - package.json
+  # lets a failed publish be re-run without another version bump
+  workflow_dispatch:
 
 jobs:
   publish:
@@ -20,8 +22,10 @@ jobs:
           node-version: 20
           registry-url: https://registry.npmjs.org
 
+      # Trusted Publisher OIDC needs npm >= 11.5.1. Pinned to 11: npm@latest (12+) needs Node >= 22.22.2
+      # and fails to install on Node 20, which stopped the 1.2.6 publish.
       - name: Upgrade npm for Trusted Publisher OIDC support
-        run: npm install -g npm@latest
+        run: npm install -g npm@^11.5.1
 
       - name: Install dependencies
         run: npm ci
